@@ -18,7 +18,9 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from sqlalchemy import create_engine
+from flask import Flask, flash, request, render_template, g, redirect, Response, session, abort
+import os
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -101,7 +103,7 @@ def teardown_request(exception):
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
-@app.route('/')
+@app.route('/index')
 def index():
   """
   request is a special object that Flask provides to access web request information:
@@ -115,7 +117,6 @@ def index():
 
   # DEBUG: this is debugging code to see what request looks like
   print(request.args)
-
 
   #
   # example of a database query
@@ -154,7 +155,6 @@ def index():
   #
   context = dict(data = names)
 
-
   #
   # render_template looks in the templates/ folder for files.
   # for example, the below file reads template/index.html
@@ -173,6 +173,73 @@ def index():
 def another():
   return render_template("anotherfile.html")
 
+@app.route('/test')
+
+@app.route('/test/<name>')
+def hello(name=None):
+    return render_template('test.html', person=name)
+
+
+@app.route('/')
+def home():
+  if not session.get('logged_in'):
+    return render_template('login.html')
+  else:
+    return "Hello Boss!  <a href='/logout'>Logout</a>"
+
+@app.route('/login', methods=['GET','POST'])
+def do_admin_login():
+  if request.method == 'POST':
+    email = request.form['username']
+    password = request.form['password']
+    if email and password:
+      query = f"SELECT password FROM App_Password WHERE user_email = '{email}'"
+      result = engine.execute(query)
+      user_data = result.fetchone()  # Fetch the first result and store it in user_data
+      result.close()
+
+      if user_data and password == user_data[0]:
+        flash('Logged in successfully!', 'success')
+        session['logged_in'] = True
+      else:
+        flash('Incorrect login/password', 'danger')
+    else:
+      flash('Incorrect login/password', 'danger')
+    return home()
+  return render_template('login.html')
+
+@app.route("/logout")
+def logout():
+  session['logged_in'] = False
+  return home()
+
+@app.route('/create-account', methods=['GET','POST'])
+def create_account():
+  if request.method == 'POST':
+    new_username = request.form['username']
+    new_password = request.form['password']
+    confirm_password = request.form['confirm_password']
+    if not new_username or not new_password or not confirm_password:
+      flash('Incorrect login/password', 'danger')
+      return render_template('create-account.html')
+    if new_password != confirm_password:
+      flash('Incorrect login/password', 'danger')
+      return render_template('create-account.html')
+
+        # TODO: Add logic to save the new user to your database
+        # For example:
+        # user = User(username=new_username, password=hash_password(new_password))
+        # db.session.add(user)
+        # db.session.commit()
+        
+    print(f'Account created for user: {new_username}')
+      # Optionally, redirect to login page after successful account creation
+    flash('Account created successfully!', 'success')
+    return home()
+    
+  return render_template('create-account.html')
+
+
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
@@ -182,12 +249,6 @@ def add():
   cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
   g.conn.execute(text(cmd), name1 = name, name2 = name);
   return redirect('/')
-
-
-@app.route('/login')
-def login():
-    abort(401)
-    this_is_never_executed()
 
 
 if __name__ == "__main__":
@@ -213,7 +274,7 @@ if __name__ == "__main__":
 
     HOST, PORT = host, port
     print("running on %s:%d" % (HOST, PORT))
+    app.secret_key = os.urandom(12)
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
-
 
   run()
