@@ -19,7 +19,7 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine
-from flask import Flask, flash, request, render_template, g, redirect, Response, session, abort
+from flask import Flask, flash, request, render_template, g, redirect, Response, session, abort, url_for
 import os
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -50,6 +50,23 @@ DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
 # This line creates a database engine that knows how to connect to the URI above
 #
 engine = create_engine(DATABASEURI)
+
+result = engine.execute("SELECT * FROM Company")
+for row in result:
+  print(row)
+
+
+result = engine.execute("SELECT * FROM Applicant")
+for row in result:
+  print(row)
+
+result = engine.execute("SELECT * FROM App_User")
+for row in result:
+  print(row)
+
+result = engine.execute("SELECT * FROM App_Password")
+for row in result:
+  print(row)
 
 
 # Here we create a test table and insert some values in it
@@ -179,6 +196,23 @@ def another():
 def hello(name=None):
     return render_template('test.html', person=name)
 
+@app.route('/applicant')
+
+@app.route('/applicant/<id>')
+def applicant_home(id=None):
+  if not session.get('logged_in'):
+    return home()
+  return render_template('applicant.html', person=id)
+
+@app.route('/company')
+
+@app.route('/company/<id>')
+def company_home(id=None):
+  print("in company user home")
+  if not session.get('logged_in'):
+    return home()
+  return render_template('company.html', person=id)
+
 
 @app.route('/')
 def home():
@@ -190,17 +224,25 @@ def home():
 @app.route('/login', methods=['GET','POST'])
 def do_admin_login():
   if request.method == 'POST':
-    email = request.form['username']
+    email = request.form['email']
     password = request.form['password']
     if email and password:
       query = f"SELECT password FROM App_Password WHERE user_email = '{email}'"
       result = engine.execute(query)
-      user_data = result.fetchone()  # Fetch the first result and store it in user_data
+      user_data = result.fetchone()
       result.close()
-
       if user_data and password == user_data[0]:
         flash('Logged in successfully!', 'success')
         session['logged_in'] = True
+      
+        query = f"SELECT company_id,applicant_id FROM App_User WHERE user_email = '{email}'"
+        result = engine.execute(query)
+        user_data = result.fetchone()
+        result.close()
+        if user_data and user_data[0]:
+          return redirect(url_for('company_home', id=user_data[0]))
+        if user_data and user_data[1]:
+          return redirect(url_for('applicant_home', id=user_data[1]))
       else:
         flash('Incorrect login/password', 'danger')
     else:
@@ -216,39 +258,103 @@ def logout():
 @app.route('/create-account', methods=['GET','POST'])
 def create_account():
   if request.method == 'POST':
-    new_username = request.form['username']
-    new_password = request.form['password']
-    confirm_password = request.form['confirm_password']
-    if not new_username or not new_password or not confirm_password:
-      flash('Incorrect login/password', 'danger')
-      return render_template('create-account.html')
-    if new_password != confirm_password:
-      flash('Incorrect login/password', 'danger')
-      return render_template('create-account.html')
+    user_type = request.form.get('user_type')
+    if user_type=="Applicant":
+      return redirect(url_for('create_account_applicant'))
+    if user_type=="Company":
+      return redirect(url_for('create_account_company'))
 
-        # TODO: Add logic to save the new user to your database
-        # For example:
-        # user = User(username=new_username, password=hash_password(new_password))
-        # db.session.add(user)
-        # db.session.commit()
-        
-    print(f'Account created for user: {new_username}')
-      # Optionally, redirect to login page after successful account creation
-    flash('Account created successfully!', 'success')
     return home()
-    
   return render_template('create-account.html')
 
 
+@app.route('/create-account-applicant', methods=['GET','POST'])
+def create_account_applicant():
+  if request.method == 'POST':
+    new_email = request.form['email']
+    new_password = request.form['password']
+    confirm_password = request.form['confirm_password']
+    new_name = request.form['name']
+    new_occupation = request.form['occupation']
 
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add():
-  name = request.form['name']
-  print(name)
-  cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
-  g.conn.execute(text(cmd), name1 = name, name2 = name);
-  return redirect('/')
+    if not new_email or not new_password or not confirm_password or not new_name:
+      print("missing")
+      return render_template('create-account-applicant.html',error='Missing Information')
+    if new_password != confirm_password:
+      print("password dont match")
+      return render_template('create-account-applicant.html',error='Passwords do not match')
+    print("query")
+    query = f"SELECT * FROM App_Password WHERE user_email = '{new_email}'"
+    result = engine.execute(query)
+    user_data = result.fetchone()
+    result.close()
+    if user_data and user_data[0]:
+      print("email exists")
+      return render_template('create-account-applicant.html',error='Email already exists')
+
+    print('adding user')
+
+    cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)';
+    g.conn.execute(text(cmd), email1 = new_email, password1 = new_password);
+
+    query = f"SELECT MAX(applicant_id) FROM Applicant"
+    result = engine.execute(query)
+    applicant_id = result.fetchone()[0] + 1
+    result.close()
+
+    
+    cmd = 'INSERT INTO Applicant VALUES (:id1,:occupation1)'
+    g.conn.execute(text(cmd), id1 = applicant_id,occupation1 = new_occupation)
+    cmd = 'INSERT INTO App_User VALUES (:email1,:name1,null,:id1)'
+    g.conn.execute(text(cmd), email1 = new_email, name1 = new_name,id1 = applicant_id)
+
+    session['logged_in'] = True
+    return redirect(url_for('applicant_home',id=applicant_id))
+
+  return render_template('create-account-applicant.html')
+
+
+@app.route('/create-account-company', methods=['GET','POST'])
+def create_account_company():
+  if request.method == 'POST':
+    new_email = request.form['email']
+    new_password = request.form['password']
+    confirm_password = request.form['confirm_password']
+    new_name = request.form['name']
+    new_field = request.form['field']
+    new_size = request.form['size']
+
+    if not new_email or not new_password or not confirm_password or not new_name:
+      return render_template('create-account-company.html',error='Missing Information')
+    if new_size and not new_size.isdigit():
+      return render_template('create-account-company.html',error='Company size must be a number')
+    if new_password != confirm_password:
+      return render_template('create-account-company.html',error='Passwords do not match')
+
+    query = f"SELECT * FROM App_Password WHERE user_email = '{new_email}'"
+    result = engine.execute(query)
+    user_data = result.fetchone()
+    result.close()
+    if user_data and user_data[0]:
+      return render_template('create-account-company.html',error='Email already exists')
+
+    cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)';
+    g.conn.execute(text(cmd), email1 = new_email, password1 = new_password);
+    query = f"SELECT MAX(company_id) FROM Company"
+    result = engine.execute(query)
+    company_id = result.fetchone()[0] + 1
+    result.close()
+
+    cmd = 'INSERT INTO Company VALUES (:id1,:size1,:field1)'
+    g.conn.execute(text(cmd), id1 = company_id,size1=new_size,field1=new_field )
+    cmd = 'INSERT INTO App_User VALUES (:email1,:name1,:id1,null)'
+    g.conn.execute(text(cmd), email1 = new_email, name1 = new_name,id1 = company_id)
+    
+    session['logged_in'] = True
+    return redirect(url_for('company_home',id=company_id))
+
+  return render_template('create-account-company.html')
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,45 @@
+
+
+<!-- templates/create_account.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account Applicant</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="create-account-applicat">
+        <h1>Create Account Applicant</h1>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form action="/create-account-applicant" method="POST">
+            <div class="control-group">
+                <input type="text" class="login-field" placeholder="Email" name="email" required>
+                <label class="login-field-icon fui-user" for="create-email"></label>
+            </div>
+            <div class="control-group">
+                <input type="text" class="login-field" placeholder="Name" name="name" required>
+                <label class="login-field-icon fui-user" for="create-name"></label>
+            </div>
+            <div class="control-group">
+                <input type="password" class="login-field" placeholder="Password" name="password" required>
+                <label class="login-field-icon fui-lock" for="create-password"></label>
+            </div>
+            <div class="control-group">
+                <input type="password" class="login-field" placeholder="Confirm Password" name="confirm_password" required>
+                <label class="login-field-icon fui-lock" for="confirm-password"></label>
+            </div>
+            <div class="control-group">
+                <input type="text" class="login-field" placeholder="Occupation" name="occupation">
+                <label class="login-field-icon fui-lock" for="create-occupation"></label>
+            </div>
+            <input type="submit" value="Create Account" class="btn btn-primary btn-large btn-block">
+        </form>
+        <a href="/login" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Back to Login</a>
+    </div>
+
+</body>
+</html>
+

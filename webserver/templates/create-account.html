@@ -1,3 +1,5 @@
+
+
 <!-- templates/create_account.html -->
 <!DOCTYPE html>
 <html lang="en">
@@ -14,16 +16,11 @@
         {% endif %}
         <form action="/create-account" method="POST">
             <div class="control-group">
-                <input type="text" class="login-field" placeholder="Username" name="username" required>
-                <label class="login-field-icon fui-user" for="create-username"></label>
-            </div>
-            <div class="control-group">
-                <input type="password" class="login-field" placeholder="Password" name="password" required>
-                <label class="login-field-icon fui-lock" for="create-password"></label>
-            </div>
-            <div class="control-group">
-                <input type="password" class="login-field" placeholder="Confirm Password" name="confirm_password" required>
-                <label class="login-field-icon fui-lock" for="confirm-password"></label>
+                <label>Select account type:</label><br>
+                <input type="radio" id="applicant" name="user_type" value="Applicant" required>
+                <label for="applicant">Applicant</label><br>
+                <input type="radio" id="company" name="user_type" value="Company" required>
+                <label for="company">Company</label>
             </div>
             <input type="submit" value="Create Account" class="btn btn-primary btn-large btn-block">
         </form>
@@ -31,3 +28,4 @@
     </div>
 </body>
 </html>
+
