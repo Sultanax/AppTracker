@@ -99,58 +99,75 @@ def company_home(id=None):
   name = result.fetchone()[0]
   result.close()
 
-  cursor = g.conn.execute("SELECT * FROM Role_Posts WHERE company_id = %s", (int(id),))
+  cursor1 = g.conn.execute("SELECT * FROM Role_Posts WHERE company_id = %s", (int(id),))
   role = []
-  for result in cursor:
+  for result in cursor1:
     role.append(result)
-  cursor.close()
+  cursor1.close()
   context_posts = dict(data_posts = role)
 
-  cursor = g.conn.execute("SELECT * FROM Event_Holds WHERE company_id = %s", (int(id),))
+  cursor2 = g.conn.execute("SELECT * FROM Event_Holds WHERE company_id = %s", (int(id),))
   event = []
-  for result in cursor:
+  for result in cursor2:
     event.append(result)
-  cursor.close()
-  context_events = dict(data_events = role)
+  cursor2.close()
+  context_events = dict(data_events = event)
 
   return render_template("company.html", id=id, name = name, **context_posts, **context_events)
 
 
-@app.route('/company/<id>/event')
+@app.route('/company/<id>/event', methods=['GET', 'POST'])
 def create_event(id=None):
   if not session.get('logged_in'):
     return home()
-  return "create event"
+  if request.method == 'POST':
+    notes = request.form['notes']
+    date = datetime.fromisoformat(request.form['date'])
+    attendees = request.form['attendees']
+    event_type = request.form['event_type']
 
-@app.route('/company/<id>/post', methods=['GET','CREATE'])
+    if not date or not event_type:
+      return render_template('create-event.html',id=id, error='Missing Information')
+    if attendees and not attendees.isdigit():
+      return render_template('create-event.html',id=id, error='Attendees should be a number')
+
+    query = f"SELECT MAX(event_id) FROM Event_Holds"
+    result = engine.execute(query)
+    event_id = result.fetchone()[0] + 1
+    result.close()
+    
+      
+    cmd = 'INSERT INTO Event_Holds VALUES (:event_id,:company_id,:event_notes,:attendees,:event_date,:info_session,:coffee_chat)'
+    if event_type=='Info_session':
+      g.conn.execute(text(cmd), event_id=event_id,company_id=id,event_notes=notes,attendees=attendees,event_date=date,info_session=True,coffee_chat=False)
+    if event_type=='Coffee_chat':
+      g.conn.execute(text(cmd), event_id=event_id,company_id=id,event_notes=notes,attendees=attendees,event_date=date,info_session=False,coffee_chat=True)
+      
+    return redirect(url_for('company_home',id=id))
+
+  return render_template('create-event.html',id=id)
+
+@app.route('/company/<id>/post', methods=['GET', 'POST'])
 def create_post(id=None):
   if not session.get('logged_in'):
     return home()
-  if request.method == 'CREATE':
-    print("created")
+  if request.method == 'POST':
     position = request.form['position']
-    print("1")
     description = request.form['description']
-    print("1")
     location = request.form['location']
-    print("1")
     salary = request.form['salary']
-    print("1")
     role_type = request.form['role_type']
-    print("1")
 
     if not position or not role_type:
       return render_template('create-post.html',id=id, error='Missing Information')
     if salary and not salary.isdigit():
       return render_template('create-post.html',id=id, error='Salary should be a number')
-    print("correct values")
     query = f"SELECT MAX(role_id) FROM Role_Posts"
     result = engine.execute(query)
     role_id = result.fetchone()[0] + 1
     result.close()
-    print(role_id)
     cmd = 'INSERT INTO Role_Posts VALUES (:id,:position,:description,:location,:salary,:role_type,:date,:company_id)'
-    g.conn.execute(text(cmd), id=role_id,position=position,description=description,location=locationn,salary=salary,role_type=role_type,date=datetime.now(),company_id=id)
+    g.conn.execute(text(cmd), id=role_id,position=position,description=description,location=location,salary=salary,role_type=role_type,date=datetime.now(),company_id=id)
     print("added")
     return redirect(url_for('company_home',id=id))
 

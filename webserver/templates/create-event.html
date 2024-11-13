@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Event</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="create-event">
+        <h1>Create Event</h1>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form action="/company/{{ id }}/event" method="POST">
+            <div class="control-group">
+                <input type="text" class="event-notes" placeholder="Notes" name="notes">
+                <label class="login-field-icon fui-user" for="create-notes"></label>
+            </div>
+            <div class="control-group">
+                <label for="create-date">Select Date and Time:</label><br>
+                <input type="datetime-local" class="event-date" name="date" required>
+            </div>
+            <div class="control-group">
+                <input type="integer" class="event-attendees" placeholder="Attendees" name="attendees">
+                <label class="login-field-icon fui-user" for="create-attendees"></label>
+            </div>
+            <div class="control-group">
+                <label>Select event type:</label><br>
+                <input type="radio" id="info_session" name="event_type" value="Info_session" required>
+                <label for="info_session">Info Session</label><br>
+                <input type="radio" id="coffee_chat" name="event_type" value="Coffee_chat" required>
+                <label for="coffee_chat">Coffee Chat</label><br>
+            </div>
+
+            <input type="submit" value="Create Event" class="btn btn-primary btn-large btn-block">
+        </form>
+        <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
+
+    </div>
+
+</body>
+</html>
+

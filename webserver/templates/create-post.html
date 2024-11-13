@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
-    <div class="create-account-applicat">
-        <h1>Create Account Applicant</h1>
+    <div class="create-post">
+        <h1>Create Role Post</h1>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
         {% endif %}
-        <form action="/create-post" method="CREATE">
+        <form action="/company/{{ id }}/post" method="POST">
             <div class="control-group">
                 <input type="text" class="post-position" placeholder="Position" name="position" required>
                 <label class="login-field-icon fui-user" for="create-position"></label>
