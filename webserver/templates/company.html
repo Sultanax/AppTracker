@@ -1,8 +1,42 @@
-<!doctype html>
-<title>Company Home Page</title>
-{% if person %}
-  <h1>company home page {{ person }}!</h1>
-{% else %}
-  <h1>company home page</h1>
-{% endif %}
-<a href='/logout'>Logout</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>company home page</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="company">
+        {% if name %}
+        <h1>company home page {{ name }}!</h1>
+        {% else %}
+        <h1>company home page</h1>
+        {% endif %}
+
+        <h1>events</h1>
+        <div>{{data_events}}</div>
+
+        <div>
+          {% for n in data_events %}
+          <div>{{n}}</div>
+          {% endfor %}
+        </div>
+
+        <h1>posts</h1>
+        <div>{{data_posts}}</div>
+
+        <div>
+          {% for n in data_posts %}
+          <div>{{n}}</div>
+          {% endfor %}
+        </div>
+
+        <a href="{{ url_for('create_post', id=id) }}" class="btn btn-primary btn-large btn-block">Create Post</a>
+        <a href="{{ url_for('create_event', id=id) }}" class="btn btn-primary btn-large btn-block">Create Event</a>
+
+        <a href="/logout" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Logout</a>
+    </div>
+
+</body>
+</html>
+

@@ -18,9 +18,10 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from flask import Flask, flash, request, render_template, g, redirect, Response, session, abort, url_for
 import os
+from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -45,39 +46,10 @@ DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.com"
 
 DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
 
-
 #
 # This line creates a database engine that knows how to connect to the URI above
 #
 engine = create_engine(DATABASEURI)
-
-result = engine.execute("SELECT * FROM Company")
-for row in result:
-  print(row)
-
-
-result = engine.execute("SELECT * FROM Applicant")
-for row in result:
-  print(row)
-
-result = engine.execute("SELECT * FROM App_User")
-for row in result:
-  print(row)
-
-result = engine.execute("SELECT * FROM App_Password")
-for row in result:
-  print(row)
-
-
-# Here we create a test table and insert some values in it
-engine.execute("""DROP TABLE IF EXISTS test;""")
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
-
-
 
 @app.before_request
 def before_request():
@@ -107,95 +79,6 @@ def teardown_request(exception):
     pass
 
 
-#
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a GET request
-#
-# If you wanted the user to go to e.g., localhost:8111/foobar/ with POST or GET then you could use
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-# 
-# see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
-@app.route('/index')
-def index():
-  """
-  request is a special object that Flask provides to access web request information:
-
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-  See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
-  """
-
-  # DEBUG: this is debugging code to see what request looks like
-  print(request.args)
-
-  #
-  # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
-  for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
-
-#
-# This is an example of a different path.  You can see it at
-# 
-#     localhost:8111/another
-#
-# notice that the functio name is another() rather than index()
-# the functions for each app.route needs to have different names
-#
-@app.route('/another')
-def another():
-  return render_template("anotherfile.html")
-
-@app.route('/test')
-
-@app.route('/test/<name>')
-def hello(name=None):
-    return render_template('test.html', person=name)
-
 @app.route('/applicant')
 
 @app.route('/applicant/<id>')
@@ -208,10 +91,70 @@ def applicant_home(id=None):
 
 @app.route('/company/<id>')
 def company_home(id=None):
-  print("in company user home")
   if not session.get('logged_in'):
     return home()
-  return render_template('company.html', person=id)
+  
+  query = f"SELECT user_name FROM App_User WHERE company_id = '{id}'"
+  result = engine.execute(query)
+  name = result.fetchone()[0]
+  result.close()
+
+  cursor = g.conn.execute("SELECT * FROM Role_Posts WHERE company_id = %s", (int(id),))
+  role = []
+  for result in cursor:
+    role.append(result)
+  cursor.close()
+  context_posts = dict(data_posts = role)
+
+  cursor = g.conn.execute("SELECT * FROM Event_Holds WHERE company_id = %s", (int(id),))
+  event = []
+  for result in cursor:
+    event.append(result)
+  cursor.close()
+  context_events = dict(data_events = role)
+
+  return render_template("company.html", id=id, name = name, **context_posts, **context_events)
+
+
+@app.route('/company/<id>/event')
+def create_event(id=None):
+  if not session.get('logged_in'):
+    return home()
+  return "create event"
+
+@app.route('/company/<id>/post', methods=['GET','CREATE'])
+def create_post(id=None):
+  if not session.get('logged_in'):
+    return home()
+  if request.method == 'CREATE':
+    print("created")
+    position = request.form['position']
+    print("1")
+    description = request.form['description']
+    print("1")
+    location = request.form['location']
+    print("1")
+    salary = request.form['salary']
+    print("1")
+    role_type = request.form['role_type']
+    print("1")
+
+    if not position or not role_type:
+      return render_template('create-post.html',id=id, error='Missing Information')
+    if salary and not salary.isdigit():
+      return render_template('create-post.html',id=id, error='Salary should be a number')
+    print("correct values")
+    query = f"SELECT MAX(role_id) FROM Role_Posts"
+    result = engine.execute(query)
+    role_id = result.fetchone()[0] + 1
+    result.close()
+    print(role_id)
+    cmd = 'INSERT INTO Role_Posts VALUES (:id,:position,:description,:location,:salary,:role_type,:date,:company_id)'
+    g.conn.execute(text(cmd), id=role_id,position=position,description=description,location=locationn,salary=salary,role_type=role_type,date=datetime.now(),company_id=id)
+    print("added")
+    return redirect(url_for('company_home',id=id))
+
+  return render_template('create-post.html',id=id)
 
 
 @app.route('/')
@@ -219,7 +162,8 @@ def home():
   if not session.get('logged_in'):
     return render_template('login.html')
   else:
-    return "Hello Boss!  <a href='/logout'>Logout</a>"
+    session['logged_in'] = False
+    return render_template('login.html')
 
 @app.route('/login', methods=['GET','POST'])
 def do_admin_login():
@@ -258,7 +202,7 @@ def logout():
 @app.route('/create-account', methods=['GET','POST'])
 def create_account():
   if request.method == 'POST':
-    user_type = request.form.get('user_type')
+    user_type = request.form['user_type']
     if user_type=="Applicant":
       return redirect(url_for('create_account_applicant'))
     if user_type=="Company":
@@ -278,7 +222,6 @@ def create_account_applicant():
     new_occupation = request.form['occupation']
 
     if not new_email or not new_password or not confirm_password or not new_name:
-      print("missing")
       return render_template('create-account-applicant.html',error='Missing Information')
     if new_password != confirm_password:
       print("password dont match")
@@ -289,10 +232,7 @@ def create_account_applicant():
     user_data = result.fetchone()
     result.close()
     if user_data and user_data[0]:
-      print("email exists")
       return render_template('create-account-applicant.html',error='Email already exists')
-
-    print('adding user')
 
     cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)';
     g.conn.execute(text(cmd), email1 = new_email, password1 = new_password);
@@ -302,7 +242,6 @@ def create_account_applicant():
     applicant_id = result.fetchone()[0] + 1
     result.close()
 
-    
     cmd = 'INSERT INTO Applicant VALUES (:id1,:occupation1)'
     g.conn.execute(text(cmd), id1 = applicant_id,occupation1 = new_occupation)
     cmd = 'INSERT INTO App_User VALUES (:email1,:name1,null,:id1)'
@@ -354,7 +293,6 @@ def create_account_company():
     return redirect(url_for('company_home',id=company_id))
 
   return render_template('create-account-company.html')
-
 
 
 if __name__ == "__main__":

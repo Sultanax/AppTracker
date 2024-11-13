@@ -1,0 +1,49 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Role</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="create-account-applicat">
+        <h1>Create Account Applicant</h1>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form action="/create-post" method="CREATE">
+            <div class="control-group">
+                <input type="text" class="post-position" placeholder="Position" name="position" required>
+                <label class="login-field-icon fui-user" for="create-position"></label>
+            </div>
+            <div class="control-group">
+                <input type="text" class="post-description" placeholder="Description" name="description">
+                <label class="login-field-icon fui-user" for="create-description"></label>
+            </div>
+            <div class="control-group">
+                <input type="text" class="post-location" placeholder="Location" name="location">
+                <label class="login-field-icon fui-user" for="create-location"></label>
+            </div>
+            <div class="control-group">
+                <input type="integer" class="post-salary" placeholder="Salary" name="salary">
+                <label class="login-field-icon fui-user" for="create-salary"></label>
+            </div>
+            <div class="control-group">
+                <label>Select role type:</label><br>
+                <input type="radio" id="internship" name="role_type" value="Internship" required>
+                <label for="internship">Internship</label><br>
+                <input type="radio" id="fulltime" name="role_type" value="Fulltime" required>
+                <label for="fulltime">Full Time</label><br>
+            </div>
+
+            <input type="submit" value="Create Post" class="btn btn-primary btn-large btn-block">
+        </form>
+        <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
+
+    </div>
+
+</body>
+</html>
+
