@@ -17,7 +17,7 @@
 
         <div>
           {% for n in data_apps %}
-          <div>{{n}}</div>
+          <div>{{ n.user_name }} - {{ n.role_position }} - {{ n.role_description }} - {{ n.role_location }} - {{ n.role_type }} - {{ n.status }}</div>
           {% endfor %}
         </div>
 
@@ -25,7 +25,13 @@
 
         <div>
           {% for n in data_events %}
-          <div>{{n}}</div>
+          {% if n.coffee_chat %}
+          <div>Coffee chat with {{ n.user_name }} - {{ n.event_date }} </div>
+          {% else %}
+          <div>Info session with {{ n.user_name }} - {{ n.event_date }} </div>
+          {% endif %}
+
+          
           {% endfor %}
         </div>
 

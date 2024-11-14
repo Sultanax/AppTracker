@@ -91,14 +91,14 @@ def applicant_home(id=None):
   name = result.fetchone()[0]
   result.close()
 
-  cursor1 = g.conn.execute("SELECT * FROM Role_Posts, Applies,App_User WHERE App_User.company_id = Role_Posts.company_id AND Applies.role_id = Role_Posts.role_id AND Applies.applicant_id = %s", (int(id),))
+  cursor1 = g.conn.execute("SELECT Role_Posts.role_position, Role_Posts.role_description, Role_Posts.role_location, Role_Posts.role_salary, Role_Posts.role_type, App_User.user_name,Applies.status FROM Role_Posts, Applies,App_User WHERE App_User.company_id = Role_Posts.company_id AND Applies.role_id = Role_Posts.role_id AND Applies.applicant_id = %s", (int(id),))
   role = []
   for result in cursor1:
     role.append(result)
   cursor1.close()
   context_apps = dict(data_apps = role)
 
-  cursor2 = g.conn.execute("SELECT * FROM Event_Holds,Attends WHERE Event_Holds.event_id = Attends.event_id AND Attends.applicant_id = %s", (int(id),))
+  cursor2 = g.conn.execute("SELECT Event_Holds.event_id,Event_Holds.event_date, Event_Holds.event_notes, Event_Holds.info_session, Event_Holds.coffee_chat,App_User.user_name FROM Event_Holds,Attends,App_User WHERE Event_Holds.event_id = Attends.event_id AND App_User.company_id = Event_Holds.company_id AND Attends.applicant_id = %s", (int(id),))
   event = []
   for result in cursor2:
     event.append(result)
@@ -119,7 +119,25 @@ def applicant_home(id=None):
 def signup_events(id=None):
   if not session.get('logged_in'):
     return home()
-  return render_template('signup-events.html',id=id)
+  cursor1 = g.conn.execute("SELECT DISTINCT App_User.user_name, Event_Holds.event_id, Event_Holds.company_id, Event_Holds.event_date, Event_Holds.event_notes FROM Event_Holds, App_User WHERE App_User.company_id = Event_Holds.company_id")
+  event = []
+  for result in cursor1:
+    event.append(result)
+  cursor1.close()
+  context_events = dict(data_events = event)
+  if request.method == 'POST':
+    event_id = request.form.get('event')
+    query = f"SELECT * FROM Attends WHERE event_id = '{event_id}' AND applicant_id = '{id}'"
+    result = engine.execute(query)
+    user_data = result.fetchone()
+    result.close()
+    if user_data and user_data[0]:
+      return render_template('signup-events.html',id=id,**context_events,error='Already signed up')
+    print(event_id)
+    cmd = 'INSERT INTO Attends VALUES (:id,:event_id)'
+    g.conn.execute(text(cmd), id=id,event_id=event_id)
+  return render_template('signup-events.html',id=id,**context_events)
+
 
 @app.route('/applicant/<id>/roles', methods=['GET', 'POST'])
 def signup_roles(id=None):
@@ -131,7 +149,19 @@ def signup_roles(id=None):
     role.append(result)
   cursor1.close()
   context_roles = dict(data_roles = role)
+  if request.method == 'POST':
+    role_id = request.form.get('role')
+    query = f"SELECT * FROM Applies WHERE role_id = '{role_id}' AND applicant_id = '{id}'"
+    result = engine.execute(query)
+    user_data = result.fetchone()
+    result.close()
+    if user_data and user_data[0]:
+      return render_template('signup-roles.html',id=id,**context_roles,error='Already applied')
+    print(role_id)
+    cmd = 'INSERT INTO Applies VALUES (:role_id,:id,:date,:status)'
+    g.conn.execute(text(cmd), role_id=role_id,id=id,date=datetime.now(),status="Applied")
   return render_template('signup-roles.html',id=id,**context_roles)
+
 
 @app.route('/applicant/<id>/interviews', methods=['GET', 'POST'])
 def signup_interviews(id=None):
@@ -160,7 +190,7 @@ def company_home(id=None):
   cursor1.close()
   context_posts = dict(data_posts = role)
 
-  cursor2 = g.conn.execute("SELECT * FROM Event_Holds WHERE company_id = %s", (int(id),))
+  cursor2 = g.conn.execute("SELECT Event_Holds.event_id,Event_Holds.event_date, Event_Holds.event_notes, Event_Holds.attendees, Event_Holds.info_session,Event_Holds.coffee_chat FROM Event_Holds WHERE company_id = %s", (int(id),))
   event = []
   for result in cursor2:
     event.append(result)
@@ -222,7 +252,7 @@ def create_post(id=None):
     result.close()
     cmd = 'INSERT INTO Role_Posts VALUES (:id,:position,:description,:location,:salary,:role_type,:date,:company_id)'
     g.conn.execute(text(cmd), id=role_id,position=position,description=description,location=location,salary=salary,role_type=role_type,date=datetime.now(),company_id=id)
-    print("added")
+
     return redirect(url_for('company_home',id=id))
 
   return render_template('create-post.html',id=id)

@@ -17,7 +17,12 @@
 
         <div>
           {% for n in data_events %}
-          <div>{{n}}</div>
+
+          {% if n.coffee_chat %}
+          <div>Coffee chat with {{n.attendees}} attendee(s)- {{ n.event_date }} - {{ n.event_notes }} </div>
+          {% else %}
+          <div>Info session with {{n.attendees}} attendee(s) - {{ n.event_date }} - {{ n.event_notes }} </div>
+          {% endif %}
           {% endfor %}
         </div>
 
