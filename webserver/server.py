@@ -85,8 +85,62 @@ def teardown_request(exception):
 def applicant_home(id=None):
   if not session.get('logged_in'):
     return home()
-  return render_template('applicant.html', person=id)
 
+  query = f"SELECT user_name FROM App_User WHERE applicant_id = '{id}'"
+  result = engine.execute(query)
+  name = result.fetchone()[0]
+  result.close()
+
+  cursor1 = g.conn.execute("SELECT * FROM Role_Posts, Applies,App_User WHERE App_User.company_id = Role_Posts.company_id AND Applies.role_id = Role_Posts.role_id AND Applies.applicant_id = %s", (int(id),))
+  role = []
+  for result in cursor1:
+    role.append(result)
+  cursor1.close()
+  context_apps = dict(data_apps = role)
+
+  cursor2 = g.conn.execute("SELECT * FROM Event_Holds,Attends WHERE Event_Holds.event_id = Attends.event_id AND Attends.applicant_id = %s", (int(id),))
+  event = []
+  for result in cursor2:
+    event.append(result)
+  cursor2.close()
+  context_events = dict(data_events = event)
+
+  cursor3 = g.conn.execute("SELECT * FROM Role_Posts, Interviews ,App_User WHERE App_User.company_id = Role_Posts.company_id AND Interviews.role_id = Role_Posts.role_id AND Interviews.applicant_id = %s", (int(id),))
+  interview = []
+  for result in cursor3:
+    interview.append(result)
+  cursor3.close()
+  context_interviews = dict(data_interviews = interview)
+
+  return render_template('applicant.html', id=id, name = name, **context_apps, **context_events, **context_interviews)
+
+
+@app.route('/applicant/<id>/events', methods=['GET', 'POST'])
+def signup_events(id=None):
+  if not session.get('logged_in'):
+    return home()
+  return render_template('signup-events.html',id=id)
+
+@app.route('/applicant/<id>/roles', methods=['GET', 'POST'])
+def signup_roles(id=None):
+  if not session.get('logged_in'):
+    return home()
+  cursor1 = g.conn.execute("SELECT DISTINCT App_User.user_name, Role_Posts.role_id,  Role_Posts.role_position, Role_Posts.role_description,Role_Posts.role_location,Role_Posts.role_salary,Role_Posts.role_type FROM Role_Posts, App_User WHERE App_User.company_id = Role_Posts.company_id")
+  role = []
+  for result in cursor1:
+    role.append(result)
+  cursor1.close()
+  context_roles = dict(data_roles = role)
+  return render_template('signup-roles.html',id=id,**context_roles)
+
+@app.route('/applicant/<id>/interviews', methods=['GET', 'POST'])
+def signup_interviews(id=None):
+  if not session.get('logged_in'):
+    return home()
+  return render_template('signup-interviews.html',id=id)
+
+  
+  
 @app.route('/company')
 
 @app.route('/company/<id>')

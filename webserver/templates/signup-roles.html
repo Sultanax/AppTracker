@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Roles</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="roles">
+
+        <h1>Available Roles - select what you've applied to</h1>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+
+        <div>
+            {% for n in data_roles %}
+            <form action="/applicant/{{ id }}/signup-roles" method="POST">
+
+                <button type="submit" name="role" value="{{ n }}" class="role-button">{{ n }}</button>
+            </form>
+            {% endfor %}
+        </div>
+
+        <a href="{{ url_for('applicant_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
+
+        <a href="/logout" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Logout</a>
+    </div>
+
+</body>
+</html>

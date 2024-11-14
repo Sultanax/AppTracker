@@ -1,8 +1,48 @@
-<!doctype html>
-<title>Applicant Home Page</title>
-{% if person %}
-  <h1>applicant home page {{ person }}!</h1>
-{% else %}
-  <h1>applicant home page</h1>
-{% endif %}
-<a href='/logout'>Logout</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>applicant home page</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="applicant">
+        {% if name %}
+        <h1>Welcome {{ name }}!</h1>
+        {% else %}
+        <h1>Welcome!</h1>
+        {% endif %}
+
+        <h1>My applications</h1>
+
+        <div>
+          {% for n in data_apps %}
+          <div>{{n}}</div>
+          {% endfor %}
+        </div>
+
+        <h1>My events</h1>
+
+        <div>
+          {% for n in data_events %}
+          <div>{{n}}</div>
+          {% endfor %}
+        </div>
+
+        <h1>My interviews</h1>
+
+        <div>
+          {% for n in data_interviews %}
+          <div>{{n}}</div>
+          {% endfor %}
+        </div>
+
+        <a href="{{ url_for('signup_roles', id=id) }}" class="btn btn-primary btn-large btn-block">Apply for Roles</a>
+        <a href="{{ url_for('signup_events', id=id) }}" class="btn btn-primary btn-large btn-block">Register for Events</a>
+        <a href="{{ url_for('signup_interviews', id=id) }}" class="btn btn-primary btn-large btn-block">Mark an Interview</a>
+        <a href="/logout" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Logout</a>
+    </div>
+
+</body>
+</html>
+
