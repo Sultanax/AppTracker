@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-Columbia W4111 Intro to databases
-Example webserver
-
-To run locally
-
-    python server.py
-
-Go to http://localhost:8111 in your browser
-
-
-A debugger such as "pdb" may be helpful for debugging.
-Read about it online.
-"""
-
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
@@ -27,28 +12,11 @@ tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
 
-
-# XXX: The Database URI should be in the format of: 
-#
-#     postgresql://USER:PASSWORD@<IP_OF_POSTGRE_SQL_SERVER>/<DB_NAME>
-#
-# For example, if you had username ewu2493, password foobar, then the following line would be:
-#
-#     DATABASEURI = "postgresql://ewu2493:foobar@<IP_OF_POSTGRE_SQL_SERVER>/postgres"
-#
-# For your convenience, we already set it to the class database
-
-# Use the DB credentials you received by e-mail
 DB_USER = "sy3196"
 DB_PASSWORD = "hotdogs123"
-
 DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.com"
-
 DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
 
-#
-# This line creates a database engine that knows how to connect to the URI above
-#
 engine = create_engine(DATABASEURI)
 
 @app.before_request
@@ -148,19 +116,20 @@ def company_home(id=None):
   if not session.get('logged_in'):
     return home()
   
-  query = f"SELECT user_name FROM App_User WHERE company_id = '{id}'"
-  result = engine.execute(query)
-  name = result.fetchone()[0]
+  query = text("SELECT user_name FROM App_User WHERE company_id = :company_id")
+  result = g.conn.execute(query, {'company_id': id})
+  name = result.fetchone()
+  print(name)
   result.close()
 
-  cursor1 = g.conn.execute("SELECT * FROM Role_Posts WHERE company_id = %s", (int(id),))
+  cursor1 = g.conn.execute(text("SELECT * FROM Role_Posts WHERE company_id = :company_id"), {'company_id': int(id)})
   role = []
   for result in cursor1:
     role.append(result)
   cursor1.close()
   context_posts = dict(data_posts = role)
 
-  cursor2 = g.conn.execute("SELECT * FROM Event_Holds WHERE company_id = %s", (int(id),))
+  cursor2 = g.conn.execute(text("SELECT * FROM Event_Holds WHERE company_id = :company_id"), {'company_id': int(id)})
   event = []
   for result in cursor2:
     event.append(result)
@@ -235,6 +204,11 @@ def home():
   else:
     session['logged_in'] = False
     return render_template('login.html')
+  # TODO 
+  # Here if a user is logged in, we don't want to redirect
+  # them to the login page. Rather, we should be able to 
+  # show up the dashboard, depending on whether they are 
+  # a company or applicant.
 
 @app.route('/login', methods=['GET','POST'])
 def do_admin_login():
@@ -242,16 +216,16 @@ def do_admin_login():
     email = request.form['email']
     password = request.form['password']
     if email and password:
-      query = f"SELECT password FROM App_Password WHERE user_email = '{email}'"
-      result = engine.execute(query)
+      query = text(f"SELECT password FROM App_Password WHERE user_email = '{email}'")
+      result = g.conn.execute(query)
       user_data = result.fetchone()
       result.close()
       if user_data and password == user_data[0]:
         flash('Logged in successfully!', 'success')
         session['logged_in'] = True
       
-        query = f"SELECT company_id,applicant_id FROM App_User WHERE user_email = '{email}'"
-        result = engine.execute(query)
+        query = text(f"SELECT company_id,applicant_id FROM App_User WHERE user_email = '{email}'")
+        result = g.conn.execute(query)
         user_data = result.fetchone()
         result.close()
         if user_data and user_data[0]:
@@ -298,17 +272,17 @@ def create_account_applicant():
       print("password dont match")
       return render_template('create-account-applicant.html',error='Passwords do not match')
     print("query")
-    query = f"SELECT * FROM App_Password WHERE user_email = '{new_email}'"
+    query = text(f"SELECT * FROM App_Password WHERE user_email = '{new_email}'")
     result = engine.execute(query)
     user_data = result.fetchone()
     result.close()
     if user_data and user_data[0]:
       return render_template('create-account-applicant.html',error='Email already exists')
 
-    cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)';
-    g.conn.execute(text(cmd), email1 = new_email, password1 = new_password);
+    cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)'
+    g.conn.execute(text(cmd), email1 = new_email, password1 = new_password)
 
-    query = f"SELECT MAX(applicant_id) FROM Applicant"
+    query = text(f"SELECT MAX(applicant_id) FROM Applicant")
     result = engine.execute(query)
     applicant_id = result.fetchone()[0] + 1
     result.close()
@@ -341,26 +315,31 @@ def create_account_company():
     if new_password != confirm_password:
       return render_template('create-account-company.html',error='Passwords do not match')
 
-    query = f"SELECT * FROM App_Password WHERE user_email = '{new_email}'"
-    result = engine.execute(query)
+    query = text(f"SELECT * FROM App_Password WHERE user_email = '{new_email}'")
+    result = g.conn.execute(query, {'email': new_email})
+    #result = g.conn.execute(query)
     user_data = result.fetchone()
     result.close()
     if user_data and user_data[0]:
       return render_template('create-account-company.html',error='Email already exists')
 
-    cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)';
-    g.conn.execute(text(cmd), email1 = new_email, password1 = new_password);
-    query = f"SELECT MAX(company_id) FROM Company"
-    result = engine.execute(query)
+    cmd = text('INSERT INTO App_Password VALUES (:email,:password)')
+    g.conn.execute(cmd, {'email': new_email, 'password': new_password})
+    ## g.conn.execute(text(cmd), email1 = new_email, password1 = new_password)
+    query = text(f"SELECT MAX(company_id) FROM Company")
+    result = g.conn.execute(query)
     company_id = result.fetchone()[0] + 1
     result.close()
 
-    cmd = 'INSERT INTO Company VALUES (:id1,:size1,:field1)'
-    g.conn.execute(text(cmd), id1 = company_id,size1=new_size,field1=new_field )
-    cmd = 'INSERT INTO App_User VALUES (:email1,:name1,:id1,null)'
-    g.conn.execute(text(cmd), email1 = new_email, name1 = new_name,id1 = company_id)
+    cmd = text('INSERT INTO Company VALUES (:id,:size,:field)')
+    g.conn.execute(cmd, {'id': company_id, 'size': new_size, 'field': new_field})
+    #g.conn.execute(text(cmd), id1 = company_id,size1=new_size,field1=new_field )
+    cmd = text('INSERT INTO App_User VALUES (:email,:name,:id,null)')
+    g.conn.execute(cmd, {'email': new_email, 'name': new_name, 'id': company_id})
+    #g.conn.execute(text(cmd), email1 = new_email, name1 = new_name,id1 = company_id)
     
     session['logged_in'] = True
+    print(f"Redirecting to /company/{company_id}")
     return redirect(url_for('company_home',id=company_id))
 
   return render_template('create-account-company.html')

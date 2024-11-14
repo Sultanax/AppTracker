@@ -7,14 +7,7 @@
 </head>
 <body>
     <div class="company">
-        {% if name %}
-        <h1>company home page {{ name }}!</h1>
-        {% else %}
-        <h1>company home page</h1>
-        {% endif %}
-
         <h1>events</h1>
-
         <div>
           {% for n in data_events %}
           <div>{{n}}</div>
@@ -28,6 +21,58 @@
           <div>{{n}}</div>
           {% endfor %}
         </div>
+
+        <div id ="table-div">
+            <div class="div-form">
+                <form id="new-entry">
+                    <label for="filter">Filter: </label>
+                    <select id="filter" title="Filter">
+                        <option value="all">All</option>
+                        <option value="events">Events</option>
+                        <option value="roles">Roles</option>
+                    </select>
+                    <br>
+                </form>
+            </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Role ID</th>
+                    <th>Position</th>
+                    <th>Date Posted</th>
+                    <th>Description</th>
+                    <th>Location</th>
+                    <th>Salary</th>
+                </tr>
+            </thead>
+            <tbody class="table-body">
+                <tr>
+                    </td>
+                        <button onclick="updateRow(this)">Update</button>
+                        <button onclick="deleteRow(this)">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="updateRow(this)">Update</button>
+                        <button onclick="deleteRow(this)">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="updateRow(this)">Update</button>
+                        <button onclick="deleteRow(this)">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="updateRow(this)">Update</button>
+                        <button onclick="deleteRow(this)">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
         <a href="{{ url_for('create_post', id=id) }}" class="btn btn-primary btn-large btn-block">Create Post</a>
         <a href="{{ url_for('create_event', id=id) }}" class="btn btn-primary btn-large btn-block">Create Event</a>

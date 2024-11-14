@@ -1,24 +1,22 @@
 <link rel="stylesheet" href="/static/style.css" type="text/css">
 
 <form action="/login" method="POST">
-  <div class="login">
-    <div class="login-screen">
-      <div class="app-title">
-        <h1>Login</h1>
-      </div>
-      <div class="login-form">
-        <div class="control-group">
-          <input type="text" class="login-field" value="" placeholder="Email" name="email">
-          <label class="login-field-icon fui-user" for="login-email"></label>
-        </div>
-        <div class="control-group">
-          <input type="password" class="login-field" value="" placeholder="password" name="password">
-          <label class="login-field-icon fui-lock" for="login-pass"></label>
-        </div>
-        <input type="submit" value="Log in" class="btn btn-primary btn-large btn-block">
-        <a href="/create-account" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Create Account</a>
-        
-      </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h1>App Tracker</h1>
+        <p>Apply & Track: All in One</p>
+        <form action="/login" method="POST">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="login-btn">Login</button>
+            <button type="button" class="create-btn" onclick="window.location.href='/create-account'">Create Account</button>
+        </form>
     </div>
-  </div>
+</body>
 </form>

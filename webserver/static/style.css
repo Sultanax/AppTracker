@@ -1,88 +1,138 @@
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
-    }
-    
-    *:focus {
-    outline: none;
-    }
-    body {
-    font-family: Arial;
-    background-color: #3498DB;
-    padding: 50px;
-    }
-    .login {
-    margin: 20px auto;
-    width: 300px;
-    }
-    .login-screen {
-    background-color: #FFF;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #000; /* Black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #fff;
+    font-family: 'Roboto', sans-serif;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
     padding: 20px;
-    border-radius: 5px
-    }
-    
-    .app-title {
-    text-align: center;
-    color: #777;
-    }
-    
-    .login-form {
-    text-align: center;
-    }
-    .control-group {
-    margin-bottom: 10px;
-    }
-    
-    input {
-    text-align: center;
-    background-color: #ECF0F1;
-    border: 2px solid transparent;
-    border-radius: 3px;
-    font-size: 16px;
-    font-weight: 200;
-    padding: 10px 0;
-    width: 250px;
-    transition: border .5s;
-    }
-    
-    input:focus {
-    border: 2px solid #3498DB;
-    box-shadow: none;
-    }
-    
-    .btn {
-    border: 2px solid transparent;
-    background: #3498DB;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    width: 100%;
+}
+
+.login-field {
+    width: 600px;
+}
+
+h1 {
+    margin-bottom: 30px;
+    font-size: 3.5rem;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center
+}
+
+p {
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    text-align: center
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input {
+    padding: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #333;
     color: #ffffff;
-    font-size: 16px;
-    line-height: 25px;
-    padding: 10px 0;
-    text-decoration: none;
-    text-shadow: none;
-    border-radius: 3px;
-    box-shadow: none;
-    transition: 0.25s;
-    display: block;
-    width: 250px;
-    margin: 0 auto;
-    }
-    
-    .btn:hover {
-    background-color: #2980B9;
-    }
-    
-    .btn-primary {
-        background-color: #007bff;
-        color: #fff;
-        margin-bottom: 10px;
-    }
-    
-    .btn-secondary {
-        background-color: #6c757d;
-        color: #fff;
-    }
-    .login-link {
-    font-size: 12px;
-    color: #444;
-    display: block;
-    margin-top: 12px;
-    }
+}
+
+
+button {
+    padding: 12px;
+    margin-bottom: 10px;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.login-btn {
+    background-color: #4caf50; /* Green for login */
+    color: #fff;
+}
+
+.create-btn {
+    background-color: #008cba; /* Blue for create account */
+    color: #fff;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.div-form{
+    float:absolute;
+    margin-left: 200px;
+    background-color:antiquewhite;
+    width: 67%;
+    margin: 20px auto; 
+    padding: 20px; 
+    border: 1px solid #ccc;
+    border-radius: 5px; 
+}
+
+.table {
+    margin: 20px auto;
+    width: 70%; 
+    border-collapse: collapse;
+    border: 1px solid #000; 
+}
+
+.table th, .table td {
+    border: 1px solid black;
+    padding: 8px;
+    background-color:antiquewhite;
+    color: black;
+}
+
+#form-entry input[type="text"], #form-entry select {
+    width: calc(100% - 10px);
+    padding: 8px; 
+    margin-bottom: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+}
+
+.table button {
+    padding: 6px 12px; 
+    margin-right: 5px; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+
+}
+.table button:nth-child(odd) {
+    background-color: #007bff; 
+    color: #fff; 
+}
+
+.table button:nth-child(even) {
+    background-color: #ff0000; 
+    color: #fff; 
+}
+.table button:hover {
+    opacity: 0.8; 
+}
