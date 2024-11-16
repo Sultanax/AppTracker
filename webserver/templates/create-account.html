@@ -7,15 +7,18 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
-    <div class="create-account">
+    <div>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
         {% endif %}
         <form action="/create-account" method="POST">
             <div class="control-group">
                 <p>Which type of account do you wish to register?</p>
-                <button type="button" onclick="window.location.href='/create-account-company'">Company</button>
-                <button type="button" onclick="window.location.href='/create-account-applicant'">Applicant</button>
+                <button type="button" class="blue-button" onclick="window.location.href='/create-account-company'">Company</button>
+                <button type="button" class="blue-button" onclick="window.location.href='/create-account-applicant'">Applicant</button>
+                <br>
+                <br>
+                <br>
             </div>
         </form>
         <a href="/login" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Go Back</a>

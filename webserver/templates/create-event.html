@@ -6,14 +6,25 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
-    <div class="create-event">
+    <div>
         <h1>Create Event</h1>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
         {% endif %}
         <form action="/company/{{ id }}/event" method="POST">
             <div class="control-group">
-                <input type="text" class="event-notes" placeholder="Notes" name="notes">
+                <label class="button">
+                    <input type="radio" id="info_session" name="event_type" value="Info_session" required>
+                    <span>+ Info Session</span>
+                </label>
+                <label class="button">
+                    <input type="radio" id="coffee_chat" name="event_type" value="Coffee_chat" required>
+                    <span>+ Cofee Chat</span>
+                </label>
+            </div>
+            <br>
+            <div class="control-group">
+                <input type="text" class="event-notes" placeholder="Title" name="notes">
                 <label class="login-field-icon fui-user" for="create-notes"></label>
             </div>
             <div class="control-group">
@@ -25,14 +36,14 @@
                 <label class="login-field-icon fui-user" for="create-attendees"></label>
             </div>
             <div class="control-group">
-                <label>Select event type:</label><br>
-                <input type="radio" id="info_session" name="event_type" value="Info_session" required>
-                <label for="info_session">Info Session</label><br>
-                <input type="radio" id="coffee_chat" name="event_type" value="Coffee_chat" required>
-                <label for="coffee_chat">Coffee Chat</label><br>
+                <input type="text" class="event-organizer" placeholder="Main Organizer" name="organizer">
+                <label class="login-field-icon fui-user" for="create-organizer"></label>
             </div>
-
-            <input type="submit" value="Create Event" class="btn btn-primary btn-large btn-block">
+            <div class="control-group">
+                <input type="text" class="event-organizer-email" placeholder="Main Organizer's Email" name="organizer-email">
+                <label class="login-field-icon fui-user" for="create-organizer-email"></label>
+            </div>
+            <input class="green-btn" type="submit" value="Create Event" class="btn btn-primary btn-large btn-block">
         </form>
         <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
 

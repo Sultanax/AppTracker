@@ -6,6 +6,7 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine, text
 from flask import Flask, flash, request, render_template, g, redirect, Response, session, abort, url_for
 import os
+import re
 from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -174,7 +175,7 @@ def create_event(id=None):
 def create_post(id=None):
   if not session.get('logged_in'):
     return home()
-  if request.method == 'POST':
+  if request.method == 'POST':  
     position = request.form['position']
     description = request.form['description']
     location = request.form['location']
@@ -185,11 +186,11 @@ def create_post(id=None):
       return render_template('create-post.html',id=id, error='Missing Information')
     if salary and not salary.isdigit():
       return render_template('create-post.html',id=id, error='Salary should be a number')
-    query = f"SELECT MAX(role_id) FROM Role_Posts"
-    result = engine.execute(query)
+    query = text(f"SELECT MAX(role_id) FROM Role_Posts")
+    result = g.conn.execute(query)
     role_id = result.fetchone()[0] + 1
     result.close()
-    cmd = 'INSERT INTO Role_Posts VALUES (:id,:position,:description,:location,:salary,:role_type,:date,:company_id)'
+    cmd = text('INSERT INTO Role_Posts VALUES (:id,:position,:description,:location,:salary,:role_type,:date,:company_id)')
     g.conn.execute(text(cmd), id=role_id,position=position,description=description,location=location,salary=salary,role_type=role_type,date=datetime.now(),company_id=id)
     print("added")
     return redirect(url_for('company_home',id=id))
@@ -308,12 +309,16 @@ def create_account_company():
     new_field = request.form['field']
     new_size = request.form['size']
 
-    if not new_email or not new_password or not confirm_password or not new_name:
+    if not new_email or not new_password or not confirm_password or not new_name or not new_size or not new_field:
       return render_template('create-account-company.html',error='Missing Information')
     if new_size and not new_size.isdigit():
       return render_template('create-account-company.html',error='Company size must be a number')
+    #if not is_strong_password(new_password):
+    #  return render_template('create-account-company.html',error='Password must have 8 characters minumum, at least one uppercase, one lowercase, and one speacial character.')
     if new_password != confirm_password:
       return render_template('create-account-company.html',error='Passwords do not match')
+    if not is_valid_email(new_email):
+      return render_template('create-account-company.html',error='Must enter proper email.')
 
     query = text(f"SELECT * FROM App_Password WHERE user_email = '{new_email}'")
     result = g.conn.execute(query, {'email': new_email})
@@ -344,6 +349,22 @@ def create_account_company():
 
   return render_template('create-account-company.html')
 
+@app.route('/delete/<int:role_id>', methods=['POST'])
+def delete_role(role_id):
+    g.conn.execute('DELETE FROM roles WHERE role_id = ?', (role_id,))
+    query = text(f"SELECT MAX(company_id) FROM Company")
+    result = g.conn.execute(query)
+    company_id = result.fetchone()[0] + 1
+    return redirect(url_for('company_home',id=company_id))
+
+def is_valid_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def is_strong_password(password):
+    # must have 8 chars, at least one uppercase, one lowercase, and one special char
+    pattern = r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[@$!%*?&])[A-Za-z@$!%*?&]{8,}$'
+    return re.match(pattern, password) is not None
 
 if __name__ == "__main__":
   import click

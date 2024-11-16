@@ -6,80 +6,97 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
-    <div class="company">
-        <h1>events</h1>
-        <div>
-          {% for n in data_events %}
-          <div>{{n}}</div>
-          {% endfor %}
-        </div>
-
-        <h1>posts</h1>
-
-        <div>
-          {% for n in data_posts %}
-          <div>{{n}}</div>
-          {% endfor %}
-        </div>
-
-        <div id ="table-div">
-            <div class="div-form">
-                <form id="new-entry">
-                    <label for="filter">Filter: </label>
-                    <select id="filter" title="Filter">
-                        <option value="all">All</option>
-                        <option value="events">Events</option>
-                        <option value="roles">Roles</option>
-                    </select>
-                    <br>
-                </form>
-            </div>
-        <table class="table">
+    <h2>Roles Posted</h2>
+    <div class="table-wrapper">
+        <table class="fl-table">
             <thead>
                 <tr>
                     <th>Role ID</th>
                     <th>Position</th>
-                    <th>Date Posted</th>
-                    <th>Description</th>
+                    <th>Type</th>
                     <th>Location</th>
                     <th>Salary</th>
+                    <th>Date Posted</th>
                 </tr>
             </thead>
-            <tbody class="table-body">
+            <tbody>
+                {% for post in data_posts %}
                 <tr>
-                    </td>
-                        <button onclick="updateRow(this)">Update</button>
-                        <button onclick="deleteRow(this)">Delete</button>
-                    </td>
-                </tr>
-                <tr>
+                    <td>{{ post.role_id }}</td>
+                    <td>{{ post.role_position }}</td>
+                    <td>{{ post.role_type }}</td>
+                    <td>{{ post.role_location }}</td>
+                    <td>{{ post.role_salary }}</td>
+                    <td>{{ post.date_posted }}</td>
                     <td>
-                        <button onclick="updateRow(this)">Update</button>
-                        <button onclick="deleteRow(this)">Delete</button>
+                        <form method="POST" action="/delete/{{ post.role_id }}">
+                            <button class="red-btn" type="submit">Delete</button>
+                        </form>
                     </td>
                 </tr>
-                <tr>
-                    <td>
-                        <button onclick="updateRow(this)">Update</button>
-                        <button onclick="deleteRow(this)">Delete</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <button onclick="updateRow(this)">Update</button>
-                        <button onclick="deleteRow(this)">Delete</button>
-                    </td>
-                </tr>
-            </tbody>
+                {% endfor %}
+            <tbody>
         </table>
     </div>
-
-        <a href="{{ url_for('create_post', id=id) }}" class="btn btn-primary btn-large btn-block">Create Post</a>
-        <a href="{{ url_for('create_event', id=id) }}" class="btn btn-primary btn-large btn-block">Create Event</a>
-
-        <a href="/logout" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Logout</a>
+    <br>
+    <br>
+    <h2>Events Posted</h2>
+    <div class="table-wrapper"> 
+        <table class="fl-table">
+            <thead>
+                <tr>
+                    <th>Event ID</th>
+                    <th>Event Title</th>
+                    <th>Attendees</th>
+                    <th>Event Date</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in data_events %}
+                <tr>
+                    <td>{{ event.event_id }}</td>
+                    <td>{{ event.event_notes }}</td>
+                    <td>{{ event.attendees }}</td>
+                    <td>{{ event.event_date }}</td>
+                    <td>
+                        {% if event.info_session %}
+                            Info Session
+                        {% elif event.coffee_chat %}
+                            Coffee Chat
+                        {% else %}
+                            Other Event
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="/delete/{{ event.event_id }}">
+                            <button class="red-btn" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            <tbody>
+        </table>
     </div>
-
+    <br>
+    <br>
+    </div>
+        <form action="{{ url_for('create_post', id=id) }}" method="GET">
+            <button type="submit" class="btn blue-button">
+                <span class="btn-icon">+</span> Create Post
+            </button>
+        </form>
+        
+        <form action="{{ url_for('create_event', id=id) }}" method="GET">
+            <button type="submit" class="btn blue-button">
+                <span class="btn-icon">+</span> Create Event
+            </button>
+        </form>
+        
+        <form action="/logout" method="GET">
+            <button type="submit" class="btn green-btn">Logout</button>
+        </form>
+    </div>
 </body>
 </html>
 

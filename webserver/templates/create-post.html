@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
-    <div class="create-post">
+    <div>
         <h1>Create Role Post</h1>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
@@ -31,14 +31,18 @@
                 <label class="login-field-icon fui-user" for="create-salary"></label>
             </div>
             <div class="control-group">
-                <label>Select role type:</label><br>
-                <input type="radio" id="internship" name="role_type" value="Internship" required>
-                <label for="internship">Internship</label><br>
-                <input type="radio" id="fulltime" name="role_type" value="Fulltime" required>
-                <label for="fulltime">Full Time</label><br>
+                <label class="button">
+                    <input type="radio" name="role_type" value="Internship" required>
+                    <span>+ Internship</span>
+                </label>
+                <label class="button">
+                    <input type="radio" name="role_type" value="Fulltime" required>
+                    <span>+ Fulltime</span>
+                </label>
             </div>
-
-            <input type="submit" value="Create Post" class="btn btn-primary btn-large btn-block">
+            <br>
+            <br>
+            <input type="submit" value="Create Post" class="btn green-btn btn-primary btn-large btn-block">
         </form>
         <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
 

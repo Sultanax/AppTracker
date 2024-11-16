@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
-    <div class="create-account-applicat">
+    <div>
         <p>Enter your company details</p>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
@@ -32,14 +32,14 @@
                 <label class="login-field-icon fui-lock" for="confirm-password"></label>
             </div>
             <div class="control-group">
-                <input type="integer" class="login-field" placeholder="Size" name="size">
+                <input type="integer" class="login-field" placeholder="Size" name="size" required>
                 <label class="login-field-icon fui-lock" for="create-size"></label>
             </div>
             <div class="control-group">
-                <input type="text" class="login-field" placeholder="Field" name="field">
+                <input type="text" class="login-field" placeholder="Field" name="field" required>
                 <label class="login-field-icon fui-lock" for="create-field"></label>
             </div>
-            <button type="submit">Create Account</button>
+            <button type="submit" class="green-btn">Create Account</button>
         </form>
         <a href="/create-account" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Go Back</a>
     </div>
