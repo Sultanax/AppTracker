@@ -9,6 +9,9 @@
 </head>
 <body>
     <div class="login-container">
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
         <h1>App Tracker</h1>
         <p>Apply & Track: All in One</p>
         <form action="/login" method="POST">

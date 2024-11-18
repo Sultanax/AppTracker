@@ -32,20 +32,19 @@
             </div>
             <div class="control-group">
                 <label class="button">
-                    <input type="radio" name="role_type" value="Internship" required>
+                    <input type="radio" name="role_type" value="Internship" id="internship" required>
                     <span>+ Internship</span>
                 </label>
                 <label class="button">
-                    <input type="radio" name="role_type" value="Fulltime" required>
+                    <input type="radio" name="role_type" value="Fulltime" id="fulltime" required>
                     <span>+ Fulltime</span>
-                </label>
+                </label>  
             </div>
             <br>
             <br>
             <input type="submit" value="Create Post" class="btn green-btn btn-primary btn-large btn-block">
         </form>
         <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
-
     </div>
 
 </body>

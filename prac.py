@@ -16,15 +16,6 @@ DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/w4111"
 engine = create_engine(DATABASEURI)
 
 with engine.connect() as conn:
-    sql_update_role = """
-    UPDATE event_holds
-    SET event_notes = 'Networking for Columbia Undergrads'
-    WHERE event_id = 11;
-    """
-    conn.execute(text(sql_update_role))
-    conn.commit()
-    
-    # Verify the update
     query = "SELECT * FROM event_holds"
     result = conn.execute(text(query))
     for row in result:

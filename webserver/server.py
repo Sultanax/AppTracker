@@ -55,26 +55,26 @@ def applicant_home(id=None):
   if not session.get('logged_in'):
     return home()
 
-  query = f"SELECT user_name FROM App_User WHERE applicant_id = '{id}'"
-  result = engine.execute(query)
+  query = text(f"SELECT user_name FROM App_User WHERE applicant_id = '{id}'")
+  result = g.conn.execute(query)
   name = result.fetchone()[0]
   result.close()
 
-  cursor1 = g.conn.execute("SELECT * FROM Role_Posts, Applies,App_User WHERE App_User.company_id = Role_Posts.company_id AND Applies.role_id = Role_Posts.role_id AND Applies.applicant_id = %s", (int(id),))
+  cursor1 = g.conn.execute(text("SELECT * FROM Role_Posts, Applies,App_User WHERE App_User.company_id = Role_Posts.company_id AND Applies.role_id = Role_Posts.role_id AND Applies.applicant_id = %s", (int(id),)))
   role = []
   for result in cursor1:
     role.append(result)
   cursor1.close()
   context_apps = dict(data_apps = role)
 
-  cursor2 = g.conn.execute("SELECT * FROM Event_Holds,Attends WHERE Event_Holds.event_id = Attends.event_id AND Attends.applicant_id = %s", (int(id),))
+  cursor2 = g.conn.execute(text("SELECT * FROM Event_Holds,Attends WHERE Event_Holds.event_id = Attends.event_id AND Attends.applicant_id = %s", (int(id),)))
   event = []
   for result in cursor2:
     event.append(result)
   cursor2.close()
   context_events = dict(data_events = event)
 
-  cursor3 = g.conn.execute("SELECT * FROM Role_Posts, Interviews ,App_User WHERE App_User.company_id = Role_Posts.company_id AND Interviews.role_id = Role_Posts.role_id AND Interviews.applicant_id = %s", (int(id),))
+  cursor3 = g.conn.execute(text("SELECT * FROM Role_Posts, Interviews ,App_User WHERE App_User.company_id = Role_Posts.company_id AND Interviews.role_id = Role_Posts.role_id AND Interviews.applicant_id = %s", (int(id),)))
   interview = []
   for result in cursor3:
     interview.append(result)
@@ -150,25 +150,29 @@ def create_event(id=None):
     attendees = request.form['attendees']
     event_type = request.form['event_type']
 
-    if not date or not event_type:
+    if not date or not event_type or not notes or not attendees:
       return render_template('create-event.html',id=id, error='Missing Information')
     if attendees and not attendees.isdigit():
       return render_template('create-event.html',id=id, error='Attendees should be a number')
 
-    query = f"SELECT MAX(event_id) FROM Event_Holds"
-    result = engine.execute(query)
+    query = text(f"SELECT MAX(event_id) FROM Event_Holds")
+    result = g.conn.execute(query)
     event_id = result.fetchone()[0] + 1
     result.close()
+    cmd = text("""INSERT INTO Event_Holds 
+               VALUES (:event_id,:company_id,:event_notes,:attendees,:event_date,:info_session,:coffee_chat)""")
     
-      
-    cmd = 'INSERT INTO Event_Holds VALUES (:event_id,:company_id,:event_notes,:attendees,:event_date,:info_session,:coffee_chat)'
-    if event_type=='Info_session':
-      g.conn.execute(text(cmd), event_id=event_id,company_id=id,event_notes=notes,attendees=attendees,event_date=date,info_session=True,coffee_chat=False)
-    if event_type=='Coffee_chat':
-      g.conn.execute(text(cmd), event_id=event_id,company_id=id,event_notes=notes,attendees=attendees,event_date=date,info_session=False,coffee_chat=True)
-      
+    g.conn.execute(cmd, {
+      'event_id': event_id,
+      'company_id': id,
+      'event_notes': notes,
+      'attendees': int(attendees),
+      'event_date': date,
+      'info_session': True if event_type == 'Info_session' else False,
+      'coffee_chat': True if event_type == 'Coffee_chat' else False
+      })
+    g.conn.commit()
     return redirect(url_for('company_home',id=id))
-
   return render_template('create-event.html',id=id)
 
 @app.route('/company/<id>/post', methods=['GET', 'POST'])
@@ -181,20 +185,31 @@ def create_post(id=None):
     location = request.form['location']
     salary = request.form['salary']
     role_type = request.form['role_type']
-
     if not position or not role_type:
       return render_template('create-post.html',id=id, error='Missing Information')
     if salary and not salary.isdigit():
       return render_template('create-post.html',id=id, error='Salary should be a number')
-    query = text(f"SELECT MAX(role_id) FROM Role_Posts")
+    query = text(f"""SELECT MAX(role_id) FROM Role_Posts""")
     result = g.conn.execute(query)
     role_id = result.fetchone()[0] + 1
     result.close()
-    cmd = text('INSERT INTO Role_Posts VALUES (:id,:position,:description,:location,:salary,:role_type,:date,:company_id)')
-    g.conn.execute(text(cmd), id=role_id,position=position,description=description,location=location,salary=salary,role_type=role_type,date=datetime.now(),company_id=id)
+    cmd = text("""
+               INSERT INTO Role_Posts(role_id, role_position, role_description, role_location, role_salary, role_type, date_posted, company_id)
+               VALUES (:role_id, :position, :description, :location, :salary, :role_type, :date, :company_id)
+               """)
+    g.conn.execute(cmd, {
+      'role_id': role_id,
+      'position': position,
+      'description': description,
+      'location': location,
+      'salary': int(salary) if salary else None,
+      'role_type': role_type,
+      'date': datetime.now().date(),
+      'company_id': id
+      })
+    g.conn.commit()
     print("added")
     return redirect(url_for('company_home',id=id))
-
   return render_template('create-post.html',id=id)
 
 
@@ -222,21 +237,20 @@ def do_admin_login():
       user_data = result.fetchone()
       result.close()
       if user_data and password == user_data[0]:
-        flash('Logged in successfully!', 'success')
         session['logged_in'] = True
-      
         query = text(f"SELECT company_id,applicant_id FROM App_User WHERE user_email = '{email}'")
         result = g.conn.execute(query)
         user_data = result.fetchone()
         result.close()
-        if user_data and user_data[0]:
-          return redirect(url_for('company_home', id=user_data[0]))
-        if user_data and user_data[1]:
-          return redirect(url_for('applicant_home', id=user_data[1]))
+        if user_data:
+          if user_data[0]:
+            return redirect(url_for('company_home', id=user_data[0]))
+          elif user_data[1]:
+            return redirect(url_for('applicant_home', id=user_data[1]))
       else:
-        flash('Incorrect login/password', 'danger')
+        return render_template('login.html',error='Username or password not found. Try again.')
     else:
-      flash('Incorrect login/password', 'danger')
+      return render_template('login.html',error='Username or password not found. Try again.')
     return home()
   return render_template('login.html')
 
@@ -274,7 +288,7 @@ def create_account_applicant():
       return render_template('create-account-applicant.html',error='Passwords do not match')
     print("query")
     query = text(f"SELECT * FROM App_Password WHERE user_email = '{new_email}'")
-    result = engine.execute(query)
+    result = g.conn.execute(query)
     user_data = result.fetchone()
     result.close()
     if user_data and user_data[0]:
@@ -284,7 +298,7 @@ def create_account_applicant():
     g.conn.execute(text(cmd), email1 = new_email, password1 = new_password)
 
     query = text(f"SELECT MAX(applicant_id) FROM Applicant")
-    result = engine.execute(query)
+    result = g.conn.execute(query)
     applicant_id = result.fetchone()[0] + 1
     result.close()
 

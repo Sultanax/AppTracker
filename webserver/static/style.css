@@ -83,10 +83,6 @@ button {
     color: white; /* Text color */
 }
 
-.button:hover {
-    background-color: #262d2f; /* Darker blue on hover */
-}
-
 .green-btn {
     background-color: #4caf50; /* Green for login */
     color: #fff;
@@ -96,16 +92,6 @@ button {
     background-color: #dc2020; /* Green for login */
     color: #fff;
 }
-
-input[type="radio"] {
-    display: none;
-}
-
-input[type="radio"]:checked + .button-text {
-    background-color: #5677fa; /* Green when selected */
-}
-
-
 
 .create-btn {
     background-color: #008cba; /* Blue for create account */
@@ -245,4 +231,40 @@ button:hover {
         display: block;
         text-align: center;
     }
+}
+
+/* used in create-post */
+
+.control-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 1px; /* Adds space between buttons */
+}
+
+.button {
+    width: 220px; /* Fixed size */
+    height: 40px;
+    border: none;
+    border-radius: 1px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 1rem; /* Optional: increase font size for better readability */
+    transition: background-color 0.3s ease, color 0.3s ease;
+    background-color: #008cba; /* Default Blue */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Hide the radio input itself */
+input[type="radio"] {
+    display: none;
+}
+
+/* When radio button is checked, change the button appearance */
+input[type="radio"]:checked + span {
+    background-color: black;
+    color: white;
 }
