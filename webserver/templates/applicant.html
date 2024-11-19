@@ -51,7 +51,7 @@
         <select name="status" onchange="this.form.submit()">
             <option value="Applied" {% if post.status == 'Applied' %}selected{% endif %}>Applied</option>
             <option value="Pending" {% if post.status == 'Pending' %}selected{% endif %}>Pending</option>
-            <option value="Denied" {% if post.status == 'Denied' %}selected{% endif %}>Denied</option>
+            <option value="Rejected" {% if post.status == 'Rejected' %}selected{% endif %}>Rejected</option>
         </select>
     </form>
 </td>

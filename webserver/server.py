@@ -126,11 +126,9 @@ def interviews(applicant_id=None, role_id=None):
         text(select_query), 
         {'role_id': role_id, 'applicant_id': applicant_id}
         ).fetchone()
-      print("LINE 145: ", existing_interview)
       
       # Update the existing record by appending to arrays
       if existing_interview is not None:
-        print("LINE 149")
         update_query = """
         UPDATE interviews 
         SET interview_types = array_append(interview_types, :interview_types),
@@ -147,7 +145,6 @@ def interviews(applicant_id=None, role_id=None):
           })
         conn.commit()
       else:
-        print("LINE 164")
         insert_query = """
         INSERT INTO interviews VALUES (:role_id, :applicant_id, ARRAY[:interview_dates]::date[], ARRAY[:notes], ARRAY[:interview_types])
         """
@@ -191,7 +188,7 @@ def signup_events(id=None):
             SELECT event_id
             FROM Attends
             WHERE applicant_id = :applicant_id
-        )
+        ) AND Event_Holds.event_date >= CURRENT_DATE
     """)
   cursor1 = g.conn.execute(query, {'applicant_id': id})
   event = [result for result in cursor1]
