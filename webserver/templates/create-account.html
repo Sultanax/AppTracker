@@ -8,12 +8,13 @@
 </head>
 <body>
     <div>
+        <p>Which type of account do you wish to register?</p>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
         {% endif %}
         <form action="/create-account" method="POST">
             <div class="control-group">
-                <p>Which type of account do you wish to register?</p>
+                
                 <button type="button" class="blue-button" onclick="window.location.href='/create-account-company'">Company</button>
                 <button type="button" class="blue-button" onclick="window.location.href='/create-account-applicant'">Applicant</button>
                 <br>
@@ -21,7 +22,11 @@
                 <br>
             </div>
         </form>
-        <a href="/login" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Go Back</a>
+    </div>
+    <div>
+        <form action="/logout" method="GET">
+            <button type="submit" class="btn green-btn">Back</button>
+        </form>
     </div>
 </body>
 </html>

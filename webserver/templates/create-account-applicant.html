@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="create-account-applicant">
-        <h1>Create Account Applicant</h1>
+        <p>Enter your applicant details</p>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
         {% endif %}
@@ -35,9 +35,13 @@
                 <input type="text" class="login-field" placeholder="Occupation" name="occupation">
                 <label class="login-field-icon fui-lock" for="create-occupation"></label>
             </div>
-            <input type="submit" value="Create Account" class="btn btn-primary btn-large btn-block">
+            <button type="submit" class="green-btn">Create Account</button>
         </form>
-        <a href="/login" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Back to Login</a>
+    </div>
+    <div>
+        <form action="/logout" method="GET">
+            <button type="submit" class="btn green-btn">Back</button>
+        </form>
     </div>
 
 </body>

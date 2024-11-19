@@ -44,8 +44,19 @@
             <br>
             <input type="submit" value="Create Post" class="btn green-btn btn-primary btn-large btn-block">
         </form>
-        <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
     </div>
+</div>
+<form action="{{ url_for('company_home', id=id) }}" method="GET">
+    <button type="submit" class="btn blue-button">
+        <span class="btn-icon">+</span> Back
+    </button>
+</form>
+
+<form action="/logout" method="GET">
+    <button type="submit" class="btn green-btn">Logout</button>
+</form>
+</div>
+</div>
 
 </body>
 </html>

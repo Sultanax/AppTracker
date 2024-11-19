@@ -1,8 +1,72 @@
-<!doctype html>
-<title>events</title>
-{% if person %}
-  <h1>events {{ person }}!</h1>
-{% else %}
-  <h1>events</h1>
-{% endif %}
-<a href='/logout'>Logout</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Roles</title>
+    <link rel="stylesheet" href="/static/style.css" type="text/css">
+</head>
+<body>
+    <div class="roles">
+
+        <h1>Available Events</h1>
+        <h2>Select events to attend</h2>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+
+
+        <div class="table-wrapper">
+            <table class="fl-table">
+              <thead>
+                <tr>
+                    <th>Event ID</th>
+                    <th>Company Name</th>
+                    <th>Event Title</th>
+                    <th>Attendees</th>
+                    <th>Event Date</th>
+                    <th>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for event in data_events %}
+                <tr>
+                    <td>{{ event.event_id }}</td>
+                    <td>{{ event.user_name}}</td>
+                    <td>{{ event.event_notes }}</td>
+                    <td>{{ event.attendees }}</td>
+                    <td>{{ event.event_date }}</td>
+                    <td>
+                        {% if event.info_session %}
+                            Info Session
+                        {% elif event.coffee_chat %}
+                            Coffee Chat
+                        {% else %}
+                            Other Event
+                        {% endif %}
+                    </td>
+                    <td>
+                      <form method="POST" action="/applicant/{{ id }}/events">
+                          <button name="event" value="{{ event.event_id }}" class="role-button" type="submit">Attend</button>
+                      </form>
+                  </td>
+                </tr>
+                {% endfor %}
+            <tbody>
+            </table>
+        </div>
+
+      </div>
+      <form action="{{ url_for('applicant_home', id=id) }}" method="GET">
+          <button type="submit" class="btn blue-button">
+              <span class="btn-icon">+</span> Back
+          </button>
+      </form>
+      
+      <form action="/logout" method="GET">
+          <button type="submit" class="btn green-btn">Logout</button>
+      </form>
+      </div>
+    </div>
+
+</body>
+</html>

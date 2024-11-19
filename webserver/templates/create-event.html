@@ -36,18 +36,36 @@
                 <label class="login-field-icon fui-user" for="create-attendees"></label>
             </div>
             <div class="control-group">
-                <input type="text" class="event-organizer" placeholder="Main Organizer" name="organizer">
+                <input type="text" class="event-organizer" placeholder="Main Organizer Name" name="organizer-name">
                 <label class="login-field-icon fui-user" for="create-organizer"></label>
             </div>
             <div class="control-group">
                 <input type="text" class="event-organizer-email" placeholder="Main Organizer's Email" name="organizer-email">
                 <label class="login-field-icon fui-user" for="create-organizer-email"></label>
             </div>
+            <div class="control-group">
+                <input type="text" class="event-organizer-role" placeholder="Main Organizer's Role" name="organizer-role">
+                <label class="login-field-icon fui-user" for="create-organizer-role"></label>
+            </div>
+            <div class="control-group">
+                <input type="text" class="event-organizer-linkedin" placeholder="Main Organizer's LinkedIn" name="organizer-linkedin">
+                <label class="login-field-icon fui-user" for="create-organizer-linkedin"></label>
+            </div>
             <input class="green-btn" type="submit" value="Create Event" class="btn btn-primary btn-large btn-block">
         </form>
-        <a href="{{ url_for('company_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
-
     </div>
+</div>
+<form action="{{ url_for('company_home', id=id) }}" method="GET">
+    <button type="submit" class="btn blue-button">
+        <span class="btn-icon">+</span> Back
+    </button>
+</form>
+
+<form action="/logout" method="GET">
+    <button type="submit" class="btn green-btn">Logout</button>
+</form>
+</div>
+</div>
 
 </body>
 </html>

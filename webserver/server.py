@@ -60,46 +60,192 @@ def applicant_home(id=None):
   name = result.fetchone()[0]
   result.close()
 
-  cursor1 = g.conn.execute(text("SELECT * FROM Role_Posts, Applies,App_User WHERE App_User.company_id = Role_Posts.company_id AND Applies.role_id = Role_Posts.role_id AND Applies.applicant_id = %s", (int(id),)))
-  role = []
-  for result in cursor1:
-    role.append(result)
+  cursor1 = g.conn.execute(
+  text("""SELECT * FROM Role_Posts
+  JOIN Applies ON Applies.role_id = Role_Posts.role_id
+  JOIN App_User ON App_User.company_id = Role_Posts.company_id
+  WHERE Applies.applicant_id = :applicant_id"""),
+  {'applicant_id': int(id)}
+  )
+  role = [row for row in cursor1]
   cursor1.close()
   context_apps = dict(data_apps = role)
 
-  cursor2 = g.conn.execute(text("SELECT * FROM Event_Holds,Attends WHERE Event_Holds.event_id = Attends.event_id AND Attends.applicant_id = %s", (int(id),)))
+  cursor2 = g.conn.execute(text("SELECT * FROM Event_Holds,Attends WHERE Event_Holds.event_id = Attends.event_id AND Attends.applicant_id = :applicant_id"),{"applicant_id": int(id)})
   event = []
   for result in cursor2:
     event.append(result)
   cursor2.close()
   context_events = dict(data_events = event)
 
-  cursor3 = g.conn.execute(text("SELECT * FROM Role_Posts, Interviews ,App_User WHERE App_User.company_id = Role_Posts.company_id AND Interviews.role_id = Role_Posts.role_id AND Interviews.applicant_id = %s", (int(id),)))
-  interview = []
-  for result in cursor3:
-    interview.append(result)
+  cursor3 = g.conn.execute(
+  text("""SELECT * FROM Role_Posts
+  JOIN Interviews ON Interviews.role_id = Role_Posts.role_id
+  JOIN App_User ON App_User.company_id = Role_Posts.company_id
+  WHERE Interviews.applicant_id = :applicant_id"""),
+  {'applicant_id': int(id)}
+  )
+  interview = [row for row in cursor3]
   cursor3.close()
-  context_interviews = dict(data_interviews = interview)
+  context_interviews = dict(data_interviews=interview)
+  return render_template('applicant.html', id=id, name=name, **context_apps, **context_events, **context_interviews)
 
-  return render_template('applicant.html', id=id, name = name, **context_apps, **context_events, **context_interviews)
+@app.route('/applicant/<id>/<role_id>/update_status', methods=['POST'])
+def update_status(id=None, role_id=None):
+    if not session.get('logged_in'):
+      return home()
+    status = request.form.get('status')
+
+    query = text("""
+        UPDATE Applies 
+        SET status = :status 
+        WHERE role_id = :role_id AND applicant_id = :applicant_id
+    """)
+    g.conn.execute(query, {'status': status, 'role_id': role_id, 'applicant_id': id})
+    g.conn.commit()
+    return redirect(url_for('applicant_home', id=id))
 
 
+@app.route('/applicant/<applicant_id>/<role_id>/interviews', methods=['GET', 'POST'])
+def interviews(applicant_id=None, role_id=None):
+  if not session.get('logged_in'):
+    return home()
+  with engine.connect() as conn:
+    if request.method == 'POST':
+      interview_types = request.form.get('interview_types')
+      interview_dates = request.form.get('interview_dates')
+      interview_dates = datetime.strptime(interview_dates, '%Y-%m-%d').date()
+      notes = request.form.get('notes') or ""
+      
+      # Check if an interview record already exists for this role and applicant
+      select_query = """
+      SELECT * FROM interviews 
+      WHERE role_id = :role_id AND applicant_id = :applicant_id
+      """
+      existing_interview = conn.execute(
+        text(select_query), 
+        {'role_id': role_id, 'applicant_id': applicant_id}
+        ).fetchone()
+      print("LINE 145: ", existing_interview)
+      
+      # Update the existing record by appending to arrays
+      if existing_interview is not None:
+        print("LINE 149")
+        update_query = """
+        UPDATE interviews 
+        SET interview_types = array_append(interview_types, :interview_types),
+        interview_dates = array_append(interview_dates, :interview_dates),
+        interview_notes = array_append(interview_notes, :notes)
+        WHERE role_id = :role_id AND applicant_id = :applicant_id
+        """
+        conn.execute(text(update_query), {
+          'role_id': role_id,
+          'applicant_id': applicant_id,
+          'interview_types': interview_types,
+          'interview_dates': interview_dates,
+          'notes': notes,
+          })
+        conn.commit()
+      else:
+        print("LINE 164")
+        insert_query = """
+        INSERT INTO interviews VALUES (:role_id, :applicant_id, ARRAY[:interview_dates]::date[], ARRAY[:notes], ARRAY[:interview_types])
+        """
+        conn.execute(text(insert_query),{
+            'role_id': role_id,
+            'applicant_id': applicant_id,
+            'interview_dates': interview_dates,
+            'notes': notes,
+            'interview_types': interview_types,
+        })
+        conn.commit()
+      # Redirect to the interview history page after adding or updating an interview
+      return redirect(url_for('interviews', applicant_id=applicant_id, role_id=role_id))
+    # Fetch all existing interviews for this applicant and role
+    select_query = """
+    SELECT * FROM interviews
+    WHERE role_id = :role_id AND applicant_id = :applicant_id
+    """
+    result = conn.execute(text(select_query), {'role_id': role_id, 'applicant_id': applicant_id})
+    interviews = result.fetchall()
+    
+    interviews_list = [{
+      'role_id': row.role_id,
+      'interview_types': row.interview_types,
+      'interview_dates': row.interview_dates,
+      'interview_notes': row.interview_notes,
+      } for row in interviews]
+    print("Fetched interviews:", interviews_list)
+  # Render the interviews page with the fetched interview data
+  return render_template('interviews.html', id=applicant_id, role_id=role_id, interviews=interviews_list)
+  
 @app.route('/applicant/<id>/events', methods=['GET', 'POST'])
 def signup_events(id=None):
   if not session.get('logged_in'):
     return home()
-  return render_template('signup-events.html',id=id)
+  query = text("""
+        SELECT DISTINCT *
+        FROM Event_Holds
+        JOIN App_User ON App_User.company_id = Event_Holds.company_id
+        WHERE Event_Holds.event_id NOT IN (
+            SELECT event_id
+            FROM Attends
+            WHERE applicant_id = :applicant_id
+        )
+    """)
+  cursor1 = g.conn.execute(query, {'applicant_id': id})
+  event = [result for result in cursor1]
+  cursor1.close()
+  context_events = dict(data_events = event)
+  
+  if request.method == 'POST':
+    event_id = request.form.get('event')
+    cursor2 = g.conn.execute(text("SELECT * FROM Attends WHERE event_id =:event_id AND applicant_id =:applicant_id"),{'event_id':event_id,'applicant_id':id})
+    user_data = cursor2.fetchone()
+    cursor2.close()
+    if user_data and user_data[0]:
+      return render_template('signup-events.html',id=id,**context_events,error='Already signed-up to attend')
+    cmd = 'INSERT INTO Attends VALUES (:id,:event_id)'
+    g.conn.execute(text(cmd), {'id':int(id),'event_id':int(event_id)})
+    g.conn.commit()
+  return render_template('signup-events.html',id=id,**context_events)
+
 
 @app.route('/applicant/<id>/roles', methods=['GET', 'POST'])
 def signup_roles(id=None):
   if not session.get('logged_in'):
     return home()
-  cursor1 = g.conn.execute("SELECT DISTINCT App_User.user_name, Role_Posts.role_id,  Role_Posts.role_position, Role_Posts.role_description,Role_Posts.role_location,Role_Posts.role_salary,Role_Posts.role_type FROM Role_Posts, App_User WHERE App_User.company_id = Role_Posts.company_id")
-  role = []
-  for result in cursor1:
-    role.append(result)
+  query = text("""
+        SELECT DISTINCT
+            App_User.user_name,
+            Role_Posts.role_id,
+            Role_Posts.role_position,
+            Role_Posts.role_description,
+            Role_Posts.role_location,
+            Role_Posts.role_salary,
+            Role_Posts.role_type
+        FROM Role_Posts
+        JOIN App_User ON App_User.company_id = Role_Posts.company_id
+        WHERE Role_Posts.role_id NOT IN (
+            SELECT role_id
+            FROM Applies
+            WHERE applicant_id = :applicant_id
+        )
+    """)
+  cursor1 = g.conn.execute(query, {'applicant_id': id})
+  role = [result for result in cursor1]
   cursor1.close()
   context_roles = dict(data_roles = role)
+  if request.method == 'POST':
+    role_id = request.form.get('role')
+    cursor2 = g.conn.execute(text("SELECT * FROM Applies WHERE role_id =:role_id AND applicant_id =:applicant_id"),{'role_id':role_id,'applicant_id':id})
+    user_data = cursor2.fetchone()
+    cursor2.close()
+    if user_data and user_data[0]:
+      return render_template('signup-roles.html',id=id,**context_roles,error='Already applied')
+    cmd = 'INSERT INTO Applies VALUES (:role_id,:id,:date,:status)'
+    g.conn.execute(text(cmd), {'role_id':int(role_id),'id':int(id),'date':datetime.now(),'status':'Applied'})
+    g.conn.commit()
   return render_template('signup-roles.html',id=id,**context_roles)
 
 @app.route('/applicant/<id>/interviews', methods=['GET', 'POST'])
@@ -108,7 +254,6 @@ def signup_interviews(id=None):
     return home()
   return render_template('signup-interviews.html',id=id)
 
-  
   
 @app.route('/company')
 
@@ -119,8 +264,7 @@ def company_home(id=None):
   
   query = text("SELECT user_name FROM App_User WHERE company_id = :company_id")
   result = g.conn.execute(query, {'company_id': id})
-  name = result.fetchone()
-  print(name)
+  name = result.fetchone()[0]
   result.close()
 
   cursor1 = g.conn.execute(text("SELECT * FROM Role_Posts WHERE company_id = :company_id"), {'company_id': int(id)})
@@ -137,7 +281,14 @@ def company_home(id=None):
   cursor2.close()
   context_events = dict(data_events = event)
 
-  return render_template("company.html", id=id, name = name, **context_posts, **context_events)
+  cursor3 = g.conn.execute(text("SELECT * FROM Event_Holds,Leads,Organizer WHERE Leads.event_id=Event_Holds.event_id AND Organizer.org_id=Leads.org_id AND company_id = :company_id"), {'company_id': int(id)})
+  org = []
+  for result in cursor3:
+    org.append(result)
+  cursor3.close()
+  context_orgs = dict(data_orgs = org)
+
+  return render_template("company.html", id=id, name = name, **context_posts, **context_events,**context_orgs)
 
 
 @app.route('/company/<id>/event', methods=['GET', 'POST'])
@@ -149,11 +300,21 @@ def create_event(id=None):
     date = datetime.fromisoformat(request.form['date'])
     attendees = request.form['attendees']
     event_type = request.form['event_type']
+    org_name=request.form['organizer-name']
+    org_email=request.form['organizer-email']
+    org_role=request.form['organizer-role']
+    org_linkedin=request.form['organizer-linkedin']
 
     if not date or not event_type or not notes or not attendees:
       return render_template('create-event.html',id=id, error='Missing Information')
     if attendees and not attendees.isdigit():
       return render_template('create-event.html',id=id, error='Attendees should be a number')
+    if (org_name and not org_email) or (not org_name and org_email):
+      return render_template('create-event.html',id=id, error='Organizers should have a name and email')
+    if(org_email and not is_valid_email(org_email)):
+      return render_template('create-event.html',id=id, error='Invalid email')
+    if(org_linkedin and not is_valid_linkedin(org_linkedin)):
+      return render_template('create-event.html',id=id, error='Invalid linkedin, must begin with "http://linkedin.com/in/"')
 
     query = text(f"SELECT MAX(event_id) FROM Event_Holds")
     result = g.conn.execute(query)
@@ -172,6 +333,30 @@ def create_event(id=None):
       'coffee_chat': True if event_type == 'Coffee_chat' else False
       })
     g.conn.commit()
+
+    if org_name and org_email:
+      query = text(f"""SELECT MAX(org_id) FROM Organizer""")
+      result = g.conn.execute(query)
+      org_id = result.fetchone()[0] + 1
+      result.close()
+      cmd = text("""INSERT INTO Organizer VALUES (:org_id,:org_name,:org_email,:org_role,:org_linkedin)""")
+    
+      g.conn.execute(cmd, {
+        'org_id': org_id,
+        'org_name': org_name,
+        'org_email': org_email,
+        'org_role': org_role,
+        'org_linkedin': org_linkedin,
+        })
+      g.conn.commit()
+
+      cmd = text("""INSERT INTO Leads VALUES (:org_id,:event_id)""")
+      g.conn.execute(cmd, {
+        'org_id': org_id,
+        'event_id': event_id
+        })
+      g.conn.commit()
+
     return redirect(url_for('company_home',id=id))
   return render_template('create-event.html',id=id)
 
@@ -208,7 +393,6 @@ def create_post(id=None):
       'company_id': id
       })
     g.conn.commit()
-    print("added")
     return redirect(url_for('company_home',id=id))
   return render_template('create-post.html',id=id)
 
@@ -284,9 +468,7 @@ def create_account_applicant():
     if not new_email or not new_password or not confirm_password or not new_name:
       return render_template('create-account-applicant.html',error='Missing Information')
     if new_password != confirm_password:
-      print("password dont match")
       return render_template('create-account-applicant.html',error='Passwords do not match')
-    print("query")
     query = text(f"SELECT * FROM App_Password WHERE user_email = '{new_email}'")
     result = g.conn.execute(query)
     user_data = result.fetchone()
@@ -294,18 +476,21 @@ def create_account_applicant():
     if user_data and user_data[0]:
       return render_template('create-account-applicant.html',error='Email already exists')
 
-    cmd = 'INSERT INTO App_Password VALUES (:email1,:password1)'
-    g.conn.execute(text(cmd), email1 = new_email, password1 = new_password)
+    cmd = 'INSERT INTO App_Password VALUES (:email,:password)'
+    g.conn.execute(text(cmd), {'email':new_email, 'password':new_password})
+    g.conn.commit()
 
     query = text(f"SELECT MAX(applicant_id) FROM Applicant")
     result = g.conn.execute(query)
     applicant_id = result.fetchone()[0] + 1
     result.close()
 
-    cmd = 'INSERT INTO Applicant VALUES (:id1,:occupation1)'
-    g.conn.execute(text(cmd), id1 = applicant_id,occupation1 = new_occupation)
-    cmd = 'INSERT INTO App_User VALUES (:email1,:name1,null,:id1)'
-    g.conn.execute(text(cmd), email1 = new_email, name1 = new_name,id1 = applicant_id)
+    cmd = 'INSERT INTO Applicant VALUES (:id,:occupation)'
+    g.conn.execute(text(cmd), {'id':applicant_id,'occupation':new_occupation})
+    g.conn.commit()
+    cmd = 'INSERT INTO App_User VALUES (:email,:name,null,:id)'
+    g.conn.execute(text(cmd), {'email':new_email, 'name':new_name,'id':applicant_id})
+    g.conn.commit()
 
     session['logged_in'] = True
     return redirect(url_for('applicant_home',id=applicant_id))
@@ -344,7 +529,7 @@ def create_account_company():
 
     cmd = text('INSERT INTO App_Password VALUES (:email,:password)')
     g.conn.execute(cmd, {'email': new_email, 'password': new_password})
-    ## g.conn.execute(text(cmd), email1 = new_email, password1 = new_password)
+    g.conn.commit()
     query = text(f"SELECT MAX(company_id) FROM Company")
     result = g.conn.execute(query)
     company_id = result.fetchone()[0] + 1
@@ -352,28 +537,48 @@ def create_account_company():
 
     cmd = text('INSERT INTO Company VALUES (:id,:size,:field)')
     g.conn.execute(cmd, {'id': company_id, 'size': new_size, 'field': new_field})
-    #g.conn.execute(text(cmd), id1 = company_id,size1=new_size,field1=new_field )
+    g.conn.commit()
     cmd = text('INSERT INTO App_User VALUES (:email,:name,:id,null)')
     g.conn.execute(cmd, {'email': new_email, 'name': new_name, 'id': company_id})
-    #g.conn.execute(text(cmd), email1 = new_email, name1 = new_name,id1 = company_id)
+    g.conn.commit()
     
     session['logged_in'] = True
-    print(f"Redirecting to /company/{company_id}")
     return redirect(url_for('company_home',id=company_id))
 
   return render_template('create-account-company.html')
 
-@app.route('/delete/<int:role_id>', methods=['POST'])
-def delete_role(role_id):
-    g.conn.execute('DELETE FROM roles WHERE role_id = ?', (role_id,))
-    query = text(f"SELECT MAX(company_id) FROM Company")
-    result = g.conn.execute(query)
-    company_id = result.fetchone()[0] + 1
-    return redirect(url_for('company_home',id=company_id))
+@app.route('/company/<id>/delete_role/<role_id>', methods=['POST'])
+def delete_role(id,role_id):
+  if not session.get('logged_in'):
+    return home()
+  g.conn.execute(text('DELETE FROM Applies WHERE role_id = :role_id'), {"role_id": int(role_id)})
+  g.conn.commit()
+  g.conn.execute(text('DELETE FROM Interviews WHERE role_id = :role_id'), {"role_id": int(role_id)})
+  g.conn.commit()
+  g.conn.execute(text('DELETE FROM Role_Posts WHERE role_id = :role_id'), {"role_id": int(role_id)})
+  g.conn.commit()
+
+  return redirect(url_for('company_home',id=id))
+
+@app.route('/company/<id>/delete_event/<event_id>', methods=['POST'])
+def delete_event(id,event_id):
+  if not session.get('logged_in'):
+    return home()
+  g.conn.execute(text('DELETE FROM Attends WHERE event_id = :event_id'), {"event_id": int(event_id)})
+  g.conn.commit()
+  g.conn.execute(text('DELETE FROM Leads WHERE event_id = :event_id'), {"event_id": int(event_id)})
+  g.conn.commit()
+  g.conn.execute(text('DELETE FROM Event_Holds WHERE event_id = :event_id'), {"event_id": int(event_id)})
+  g.conn.commit()
+  return redirect(url_for('company_home',id=id))
 
 def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
+
+def is_valid_linkedin(link):
+    pattern = r'^http://linkedin\.com/in/[\w-]+$'
+    return re.match(pattern, link) is not None
 
 def is_strong_password(password):
     # must have 8 chars, at least one uppercase, one lowercase, and one special char

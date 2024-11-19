@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interview History</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h2>Interview History</h2>
+
+    <!-- Display existing interviews -->
+    <div>
+        <table class="fl-table">
+            <thead>
+                <tr>
+                    <th>Role ID</th>
+                    <th>Interview Type</th>
+                    <th>Interview Date</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+              {% for interview in interviews %}
+                  {% for idx in range(interview['interview_types']|length) %}
+                      <tr>
+                          <td>{{ interview.role_id }}</td>
+                          <td>{{ interview['interview_types'][idx] }}</td>
+                          <td>{{ interview['interview_dates'][idx] }}</td>
+                          <td>{{ interview['interview_notes'][idx] }}</td>
+                      </tr>
+                  {% endfor %}
+              {% endfor %}
+          </tbody>
+        </table>
+    </div>
+    
+    <br>
+    <hr>
+
+    <form method="POST">
+        <label for="interview_types">Interview Type:</label>
+        <select name="interview_types" id="interview_types">
+            <option value="OA">OA</option>
+            <option value="phone">Initial Phone Screening</option>
+            <option value="technical">Technical I</option>
+            <option value="technical">Technical II</option>
+            <option value="technical">Technical III</option>
+            <option value="behavioral">Behavioral I</option>
+            <option value="behavioral">Behavioral II</option>
+            <option value="behavioral">Behavioral III</option>
+        </select>
+        <br><br>
+        
+        <label for="interview_dates">Interview Date:</label>
+        <input type="date" name="interview_dates" required>
+        <br><br>
+
+        <label for="notes">Notes:</label>
+        <textarea name="notes" rows="3" placeholder="Enter any additional notes"></textarea>
+        <br><br>
+
+        <button type="submit" class="btn green-btn">Add Interview</button>
+    </form>
+    <br>
+    <form action="{{ url_for('applicant_home', id=id) }}" method="GET">
+        <button type="submit" class="btn blue-button">
+            <span class="btn-icon">+</span> Back
+        </button>
+    </form>
+</body>
+</html>

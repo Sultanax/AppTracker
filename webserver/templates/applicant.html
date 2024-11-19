@@ -13,34 +13,108 @@
         <h1>Welcome!</h1>
         {% endif %}
 
-        <h1>My applications</h1>
+        <h2>My applications</h2>
 
-        <div>
-          {% for n in data_apps %}
-          <div>{{n}}</div>
+        <div class="table-wrapper">
+          <table class="fl-table">
+          <thead>
+          <tr>
+          <th>Role ID</th>
+          <th>Company</th>
+          <th>Position</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Salary</th>
+          <th>Date Posted</th>
+          <th>Date Applied</th>
+          <th>Interviews</th>
+          <th>Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for post in data_apps %}
+          <tr>
+          <td>{{ post.role_id }}</td>
+          <td>{{ post.company_name }}</td>
+          <td>{{ post.role_position }}</td>
+          <td>{{ post.role_type }}</td>
+          <td>{{ post.role_location }}</td>
+          <td>{{ post.role_salary }}</td>
+          <td>{{ post.date_posted }}</td>
+          <td>{{ post.application_date }}</td>
+          <td>
+          <a href="{{ url_for('interviews', applicant_id=id, role_id=post.role_id) }}" class="btn blue-button">Interview History</a>
+          </td>
+          
+<td>
+    <form action="{{ url_for('update_status', id=id, role_id=post.role_id) }}" method="POST" style="display: inline;">
+        <select name="status" onchange="this.form.submit()">
+            <option value="Applied" {% if post.status == 'Applied' %}selected{% endif %}>Applied</option>
+            <option value="Pending" {% if post.status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Denied" {% if post.status == 'Denied' %}selected{% endif %}>Denied</option>
+        </select>
+    </form>
+</td>
+          </tr>
           {% endfor %}
-        </div>
+          <tbody>
+          </table>
+          </div>
+          <br>
+          
 
-        <h1>My events</h1>
+        <h2>My events</h2>
 
-        <div>
-          {% for n in data_events %}
-          <div>{{n}}</div>
-          {% endfor %}
-        </div>
+        <div class="table-wrapper"> 
+          <table class="fl-table">
+              <thead>
+                  <tr>
+                      <th>Event ID</th>
+                      <th>Event Title</th>
+                      <th>Event Date</th>
+                      <th>Type</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for event in data_events %}
+                  <tr>
+                      <td>{{ event.event_id }}</td>
+                      <td>{{ event.event_notes }}</td>
+                      <td>{{ event.event_date }}</td>
+                      <td>
+                          {% if event.info_session %}
+                              Info Session
+                          {% elif event.coffee_chat %}
+                              Coffee Chat
+                          {% else %}
+                              Other Event
+                          {% endif %}
+                      </td>
+                  </tr>
+                  {% endfor %}
+              <tbody>
+          </table>
+      </div>
+      </div>
+      <br><br>
+      <br><br>
+      <form action="{{ url_for('signup_roles', id=id) }}" method="GET">
+          <button type="submit" class="btn blue-button">
+              <span class="btn-icon">+</span> Apply for Roles
+          </button>
+      </form>
+      
+      <form action="{{ url_for('signup_events', id=id) }}" method="GET">
+          <button type="submit" class="btn blue-button">
+              <span class="btn-icon">+</span> Register for Events
+          </button>
+      </form>
+      
+      <form action="/logout" method="GET">
+          <button type="submit" class="btn green-btn">Logout</button>
+      </form>
+      </div>
 
-        <h1>My interviews</h1>
-
-        <div>
-          {% for n in data_interviews %}
-          <div>{{n}}</div>
-          {% endfor %}
-        </div>
-
-        <a href="{{ url_for('signup_roles', id=id) }}" class="btn btn-primary btn-large btn-block">Apply for Roles</a>
-        <a href="{{ url_for('signup_events', id=id) }}" class="btn btn-primary btn-large btn-block">Register for Events</a>
-        <a href="{{ url_for('signup_interviews', id=id) }}" class="btn btn-primary btn-large btn-block">Mark an Interview</a>
-        <a href="/logout" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Logout</a>
     </div>
 
 </body>

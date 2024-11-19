@@ -6,6 +6,14 @@
     <link rel="stylesheet" href="/static/style.css" type="text/css">
 </head>
 <body>
+    <div class="company">
+    {% if name %}
+    <h1>Welcome {{ name }}!</h1>
+    {% else %}
+    <h1>Welcome!</h1>
+    {% endif %}
+    <br>
+    <br>
     <h2>Roles Posted</h2>
     <div class="table-wrapper">
         <table class="fl-table">
@@ -29,7 +37,7 @@
                     <td>{{ post.role_salary }}</td>
                     <td>{{ post.date_posted }}</td>
                     <td>
-                        <form method="POST" action="/delete/{{ post.role_id }}">
+                        <form method="POST" action="/company/{{id}}/delete_role/{{ post.role_id }}">
                             <button class="red-btn" type="submit">Delete</button>
                         </form>
                     </td>
@@ -46,6 +54,7 @@
             <thead>
                 <tr>
                     <th>Event ID</th>
+                    <th>Company Name</th>
                     <th>Event Title</th>
                     <th>Attendees</th>
                     <th>Event Date</th>
@@ -56,6 +65,7 @@
                 {% for event in data_events %}
                 <tr>
                     <td>{{ event.event_id }}</td>
+                    <td>{{ event.user_name}}</td>
                     <td>{{ event.event_notes }}</td>
                     <td>{{ event.attendees }}</td>
                     <td>{{ event.event_date }}</td>
@@ -69,10 +79,39 @@
                         {% endif %}
                     </td>
                     <td>
-                        <form method="POST" action="/delete/{{ event.event_id }}">
+                        <form method="POST" action="{{ url_for('delete_event', id=id,event_id=event.event_id) }}">
                             <button class="red-btn" type="submit">Delete</button>
                         </form>
                     </td>
+                </tr>
+                {% endfor %}
+            <tbody>
+        </table>
+    </div>
+    <br>
+    <br>
+
+    <h2>Organizers</h2>
+    <div class="table-wrapper"> 
+        <table class="fl-table">
+            <thead>
+                <tr>
+                    <th>Event ID</th>
+                    <th>Org Name</th>
+                    <th>Org email</th>
+                    <th>Org role</th>
+                    <th>Org linkedin</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for org in data_orgs %}
+                <tr>
+                    <td>{{ org.event_id }}</td>
+                    <td>{{ org.org_name }}</td>
+                    <td>{{ org.org_email }}</td>
+                    <td>{{ org.org_role }}</td>
+                    <td>{{ org.org_linkedin }}</td>
                 </tr>
                 {% endfor %}
             <tbody>
@@ -97,6 +136,7 @@
             <button type="submit" class="btn green-btn">Logout</button>
         </form>
     </div>
+</div>
 </body>
 </html>
 

@@ -8,23 +8,59 @@
 <body>
     <div class="roles">
 
-        <h1>Available Roles - select what you've applied to</h1>
+        <h1>Available Roles</h1>
+        <h2>Select roles to apply to</h2>
         {% if error %}
         <p style="color: red;">{{ error }}</p>
         {% endif %}
 
-        <div>
-            {% for n in data_roles %}
-            <form action="/applicant/{{ id }}/signup-roles" method="POST">
 
-                <button type="submit" name="role" value="{{ n }}" class="role-button">{{ n }}</button>
-            </form>
-            {% endfor %}
+        <div class="table-wrapper">
+            <table class="fl-table">
+                <thead>
+                    <tr>
+                        <th>Role ID</th>
+                        <th>Company Name</th>
+                        <th>Position</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Salary</th>
+                        <th>Date Posted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in data_roles %}
+                    <tr>
+                        <td>{{ post.role_id }}</td>
+                        <td>{{ post.user_name }}</td>
+                        <td>{{ post.role_position }}</td>
+                        <td>{{ post.role_type }}</td>
+                        <td>{{ post.role_location }}</td>
+                        <td>{{ post.role_salary }}</td>
+                        <td>{{ post.date_posted }}</td>
+                        <td>
+                            <form method="POST" action="/applicant/{{ id }}/roles">
+                                <button name="role" value="{{ post.role_id }}" class="role-button" type="submit">Apply</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                <tbody>
+            </table>
         </div>
 
-        <a href="{{ url_for('applicant_home', id=id) }}" class="btn btn-primary btn-large btn-block">Back</a>
+    </div>
+    <form action="{{ url_for('applicant_home', id=id) }}" method="GET">
+        <button type="submit" class="btn blue-button">
+            <span class="btn-icon">+</span> Back
+        </button>
+    </form>
+    
+    <form action="/logout" method="GET">
+        <button type="submit" class="btn green-btn">Logout</button>
+    </form>
+    </div>
 
-        <a href="/logout" class="btn btn-secondary btn-large btn-block" style="text-align: center;">Logout</a>
     </div>
 
 </body>
