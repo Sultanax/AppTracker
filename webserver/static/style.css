@@ -11,9 +11,16 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     color: #fff;
     font-family: 'Roboto', sans-serif;
+}
+
+.display {
+    height: 100vh;
+}
+
+.dashboard {
+    padding-top: 100px;
 }
 
 .login-container {
