@@ -518,7 +518,6 @@ def create_account_company():
 
     query = text(f"SELECT * FROM App_Password WHERE user_email = '{new_email}'")
     result = g.conn.execute(query, {'email': new_email})
-    result.close()
     user_data = result.fetchone()
     result.close()
     if user_data and user_data[0]:
