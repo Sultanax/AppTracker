@@ -509,8 +509,8 @@ def create_account_company():
       return render_template('create-account-company.html',error='Missing Information')
     if new_size and not new_size.isdigit():
       return render_template('create-account-company.html',error='Company size must be a number')
-    #if not is_strong_password(new_password):
-    #  return render_template('create-account-company.html',error='Password must have 8 characters minumum, at least one uppercase, one lowercase, and one speacial character.')
+    if not is_strong_password(new_password):
+      return render_template('create-account-company.html',error='Password must have 8 characters minumum, at least one uppercase, one lowercase, and one speacial character.')
     if new_password != confirm_password:
       return render_template('create-account-company.html',error='Passwords do not match')
     if not is_valid_email(new_email):
